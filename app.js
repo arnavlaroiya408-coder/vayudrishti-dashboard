@@ -3,49 +3,65 @@ const telemetryData = {
   project: "VayuDrishti",
   region: "Jaipur Urban Sector",
   timestamp: new Date().toISOString(),
-  system_status: {
-    telemetry_stream: "ACTIVE",
-    active_nodes: 3,
-    ping_ms: 14,
-    buffer_health: "99.8%"
-  },
-  hotspots: [
+  lines: [
     {
-      id: "JPR-STP-01",
-      location_name: "Sitapura Industrial Area",
-      zone_type: "Industrial Zone",
-      coordinates: { lat: 26.7712, lng: 75.8573 },
-      metrics: { aqi: 218, status: "Hazardous", pm2_5: 142.5, pm10: 260.1, no2: 48.2, temp_celsius: 31.4, humidity_pct: 42, wind_speed_kmh: 12.8 }
+      lineId: "Line 1",
+      name: "Sitapura Industrial Area",
+      aqi: 218,
+      status: "Hazardous",
+      color: "#FF4757",
+      stages: [
+        { label: "Aerosol Feed", state: "active", metric: "142.5 µg" },
+        { label: "PM10 Filter", state: "warning", metric: "260.1 µg" },
+        { label: "Dispersion ML", state: "active", metric: "31.4°C" },
+        { label: "Threshold Trigger", state: "hazard", metric: "CRITICAL" }
+      ],
+      coords: [26.7712, 75.8573]
     },
     {
-      id: "JPR-MIR-02",
-      location_name: "MI Road (Central Jaipur)",
-      zone_type: "Commercial Corridor",
-      coordinates: { lat: 26.9154, lng: 75.8130 },
-      metrics: { aqi: 145, status: "Moderate", pm2_5: 68.1, pm10: 130.4, no2: 31.0, temp_celsius: 32.1, humidity_pct: 38, wind_speed_kmh: 9.4 }
+      lineId: "Line 2",
+      name: "MI Road Commercial Corridor",
+      aqi: 145,
+      status: "Moderate",
+      color: "#FF9F1C",
+      stages: [
+        { label: "Urban Traffic", state: "active", metric: "68.1 µg" },
+        { label: "NO2 Adsorption", state: "active", metric: "31.0 ppm" },
+        { label: "Wind Drift", state: "active", metric: "9.4 km/h" },
+        { label: "Public Alert", state: "nominal", metric: "CAUTION" }
+      ],
+      coords: [26.9154, 75.8130]
     },
     {
-      id: "JPR-MSR-03",
-      location_name: "Mansarovar Sector 7",
-      zone_type: "Residential Eco Hub",
-      coordinates: { lat: 26.8521, lng: 75.7644 },
-      metrics: { aqi: 42, status: "Optimal Green", pm2_5: 14.2, pm10: 38.0, no2: 12.5, temp_celsius: 30.2, humidity_pct: 45, wind_speed_kmh: 15.2 }
+      lineId: "Line 3",
+      name: "Mansarovar Sector 7",
+      aqi: 42,
+      status: "Optimal",
+      color: "#3BDB67",
+      stages: [
+        { label: "Eco Flora Array", state: "active", metric: "14.2 µg" },
+        { label: "PM10 Scrubber", state: "active", metric: "38.0 µg" },
+        { label: "Thermal Influx", state: "active", metric: "30.2°C" },
+        { label: "Zone Green", state: "optimal", metric: "CLEAR" }
+      ],
+      coords: [26.8521, 75.7644]
     }
   ],
   forecast_48h: [
-    { interval: "+06h", avg_aqi: 120 },
-    { interval: "+12h", avg_aqi: 185 },
-    { interval: "+18h", avg_aqi: 210 },
-    { interval: "+24h", avg_aqi: 160 },
-    { interval: "+36h", avg_aqi: 95 },
-    { interval: "+48h", avg_aqi: 48 }
+    { interval: "+00h", aqi: 110 },
+    { interval: "+06h", aqi: 135 },
+    { interval: "+12h", aqi: 195 },
+    { interval: "+18h", aqi: 218 },
+    { interval: "+24h", aqi: 170 },
+    { interval: "+30h", aqi: 140 },
+    { interval: "+36h", aqi: 95 },
+    { interval: "+42h", aqi: 65 },
+    { interval: "+48h", aqi: 42 }
   ]
 };
 
-// 2. Leaflet Dark Map Initialization
+// 2. Leaflet Tactical Map (Free OpenStreetMap Tiles, Zero API Key)
 let map;
-let markerInstances = [];
-
 function initMap() {
   const jaipurCentroid = [26.8550, 75.8100];
   map = L.map('map', {
@@ -53,208 +69,251 @@ function initMap() {
     attributionControl: false
   }).setView(jaipurCentroid, 11);
 
-  // Free OpenStreetMap Tiles (Zero API Key required)
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
   }).addTo(map);
 
-  renderMarkers();
-
-  // Attach Radar sweep cone
-  const mapContainer = document.getElementById('map');
-  if (mapContainer && !document.querySelector('.radar-sweep-cone')) {
-    const radar = document.createElement('div');
-    radar.className = 'radar-sweep-cone';
-    mapContainer.appendChild(radar);
-  }
-}
-
-function renderMarkers() {
-  markerInstances.forEach(m => map.removeLayer(m));
-  markerInstances = [];
-
-  telemetryData.hotspots.forEach(spot => {
-    let pinColor = '#10B981';
-    let ringBg = 'rgba(16, 185, 129, 0.45)';
-    
-    if (spot.metrics.aqi > 200) {
-      pinColor = '#EF4444';
-      ringBg = 'rgba(239, 68, 68, 0.45)';
-    } else if (spot.metrics.aqi > 100) {
-      pinColor = '#F59E0B';
-      ringBg = 'rgba(245, 158, 11, 0.45)';
-    }
-
+  telemetryData.lines.forEach(line => {
     const customIcon = L.divIcon({
       className: 'relative flex items-center justify-center',
       html: `
-        <div class="relative w-8 h-8 flex items-center justify-center">
-          <div class="marker-ring w-8 h-8" style="background-color: ${ringBg};"></div>
-          <div class="w-3.5 h-3.5 rounded-full border-2 border-slate-900 shadow-lg z-10" style="background-color: ${pinColor}; box-shadow: 0 0 14px ${pinColor};"></div>
+        <div class="relative w-8 h-8 flex items-center justify-center cursor-pointer">
+          <div class="marker-ring w-8 h-8" style="background-color: ${line.color}66;"></div>
+          <div class="w-3.5 h-3.5 rounded-full border-2 border-[#101419] z-10 shadow-lg" style="background-color: ${line.color}; box-shadow: 0 0 12px ${line.color};"></div>
         </div>
       `,
       iconSize: [32, 32],
       iconAnchor: [16, 16]
     });
 
-    const marker = L.marker([spot.coordinates.lat, spot.coordinates.lng], { icon: customIcon }).addTo(map);
+    const marker = L.marker(line.coords, { icon: customIcon }).addTo(map);
     marker.bindPopup(`
-      <div style="background: #0f172a; color: #fff; padding: 6px; border-radius: 6px; font-family: sans-serif; font-size: 11px;">
-        <strong style="color: ${pinColor};">${spot.location_name}</strong><br/>
-        AQI: <b>${spot.metrics.aqi}</b> (${spot.metrics.status})
+      <div style="background:#181E26; color:#fff; padding:6px 10px; border-radius:6px; font-family:monospace; font-size:11px; border:1px solid #242D3A;">
+        <strong style="color:${line.color};">${line.name}</strong><br/>
+        AQI: <b>${line.aqi}</b> (${line.status})
       </div>
     `);
-    markerInstances.push(marker);
   });
 }
 
-// 3. Render Cards with Nixtio Micro-metrics & Status Pills
-function renderHotspots() {
-  const container = document.getElementById('hotspots-list');
-  container.innerHTML = telemetryData.hotspots.map(spot => {
-    const isHazard = spot.metrics.aqi > 200;
-    const isModerate = spot.metrics.aqi > 100 && spot.metrics.aqi <= 200;
-    
-    const badgeBg = isHazard ? 'bg-red-500/10 text-red-400 border-red-500/30' : 
-                    isModerate ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' : 
-                    'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
-
+// 3. Render Multi-Line Pipeline Matrix
+function renderPipelines() {
+  const container = document.getElementById('pipeline-container');
+  if (!container) return;
+  container.innerHTML = telemetryData.lines.map(line => {
     return `
-      <div class="glass-panel p-4 space-y-3.5 border border-white/5 hover:border-emerald-500/30 transition-all">
-        <div class="flex justify-between items-start">
-          <div>
-            <h3 class="font-bold text-sm text-white tracking-wide">${spot.location_name}</h3>
-            <p class="text-[11px] text-slate-400 font-mono">${spot.id} • ${spot.zone_type}</p>
+      <div class="bg-[#12171E] p-3.5 rounded-xl border border-[#242D3A] space-y-3">
+        <div class="flex justify-between items-center text-xs font-mono">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded bg-[#181E26] text-white font-bold border border-[#242D3A]">${line.lineId}</span>
+            <span class="text-slate-300 font-bold tracking-wide">${line.name}</span>
           </div>
-          <div class="px-2.5 py-1 rounded-full text-xs font-bold font-mono border ${badgeBg}">
-            AQI ${spot.metrics.aqi}
+          <div class="flex items-center gap-2 font-bold" style="color: ${line.color}">
+            <span class="w-2 h-2 rounded-full flow-pulse" style="background-color: ${line.color}"></span>
+            AQI ${line.aqi} • ${line.status}
           </div>
         </div>
-        
-        <div class="grid grid-cols-4 gap-2 text-center font-mono text-[10px]">
-          <div class="bg-slate-900/60 border border-white/5 p-2 rounded-xl">
-            <p class="text-slate-400">PM2.5</p>
-            <p class="font-bold text-slate-200 mt-0.5">${spot.metrics.pm2_5}</p>
-          </div>
-          <div class="bg-slate-900/60 border border-white/5 p-2 rounded-xl">
-            <p class="text-slate-400">PM10</p>
-            <p class="font-bold text-slate-200 mt-0.5">${spot.metrics.pm10}</p>
-          </div>
-          <div class="bg-slate-900/60 border border-white/5 p-2 rounded-xl">
-            <p class="text-slate-400">TEMP</p>
-            <p class="font-bold text-slate-200 mt-0.5">${spot.metrics.temp_celsius}°C</p>
-          </div>
-          <div class="bg-slate-900/60 border border-white/5 p-2 rounded-xl">
-            <p class="text-slate-400">WIND</p>
-            <p class="font-bold text-slate-200 mt-0.5">${spot.metrics.wind_speed_kmh}k/h</p>
-          </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 pt-1">
+          ${line.stages.map(st => `
+            <div class="bg-[#181E26] p-2.5 rounded-lg border border-[#242D3A] relative hover:border-[#384659] transition-all">
+              <div class="flex justify-between items-center text-[10px] font-mono text-slate-400 mb-1">
+                <span>${st.label}</span>
+                <span class="w-1.5 h-1.5 rounded-full" style="background-color: ${line.color}"></span>
+              </div>
+              <div class="text-sm font-bold text-white font-mono">${st.metric}</div>
+            </div>
+          `).join('')}
         </div>
       </div>
     `;
   }).join('');
 }
 
-// 4. Futuristic Neon Forecast Chart (Chart.js)
-let forecastChartInstance = null;
-function initForecastChart() {
-  const ctx = document.getElementById('forecastChart');
+// 4. Time Curve Chart
+let timeChart;
+function initTimeCurveChart() {
+  const ctx = document.getElementById('timeCurveChart');
   if (!ctx) return;
 
-  const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 300);
-  gradient.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
-  gradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+  const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 140);
+  gradient.addColorStop(0, 'rgba(59, 219, 103, 0.45)');
+  gradient.addColorStop(1, 'rgba(59, 219, 103, 0.02)');
 
-  forecastChartInstance = new Chart(ctx, {
+  timeChart = new Chart(ctx, {
     type: 'line',
     data: {
       labels: telemetryData.forecast_48h.map(f => f.interval),
       datasets: [{
-        label: 'Predictive AQI Trend',
-        data: telemetryData.forecast_48h.map(f => f.avg_aqi),
-        borderColor: '#10B981',
+        label: 'Dispersion Vector',
+        data: telemetryData.forecast_48h.map(f => f.aqi),
+        borderColor: '#3BDB67',
         backgroundColor: gradient,
-        borderWidth: 3,
+        borderWidth: 2.5,
         fill: true,
         tension: 0.45,
-        pointBackgroundColor: '#06B6D4',
+        pointBackgroundColor: '#00D2D3',
         pointBorderColor: '#fff',
-        pointBorderWidth: 2,
-        pointRadius: 6,
-        pointHoverRadius: 8
+        pointBorderWidth: 1.5,
+        pointRadius: 4,
+        pointHoverRadius: 6
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false }
-      },
+      plugins: { legend: { display: false } },
       scales: {
         y: {
           grid: { color: 'rgba(255, 255, 255, 0.05)' },
-          ticks: { color: '#64748B', font: { family: 'JetBrains Mono' } }
+          ticks: { color: '#64748B', font: { family: 'JetBrains Mono', size: 9 } }
         },
         x: {
           grid: { display: false },
-          ticks: { color: '#64748B', font: { family: 'JetBrains Mono' } }
+          ticks: { color: '#64748B', font: { family: 'JetBrains Mono', size: 9 } }
         }
       }
     }
   });
 }
 
-// 5. Tab Navigation
-function switchTab(tab) {
-  const telemetryView = document.getElementById('view-telemetry');
-  const forecastView = document.getElementById('view-forecast');
-  const btnTelemetry = document.getElementById('tab-telemetry-btn');
-  const btnForecast = document.getElementById('tab-forecast-btn');
+// 5. Deep Analytics Chart for View 2
+let deepChart;
+function initDeepAnalyticsChart() {
+  const ctx = document.getElementById('deepAnalyticsChart');
+  if (!ctx || deepChart) return;
 
-  if (tab === 'telemetry') {
-    telemetryView.classList.remove('hidden');
-    forecastView.classList.add('hidden');
-    btnTelemetry.className = "px-5 py-2 rounded-full bg-emerald-500 text-slate-950 font-bold shadow-lg shadow-emerald-500/25 transition-all";
-    btnForecast.className = "px-5 py-2 rounded-full text-slate-400 hover:text-white transition-all";
+  const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 360);
+  gradient.addColorStop(0, 'rgba(0, 210, 211, 0.4)');
+  gradient.addColorStop(1, 'rgba(0, 210, 211, 0.0)');
+
+  deepChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: telemetryData.forecast_48h.map(f => f.interval),
+      datasets: [{
+        label: 'Full Vector Dispersion AQI',
+        data: telemetryData.forecast_48h.map(f => f.aqi),
+        borderColor: '#00D2D3',
+        backgroundColor: gradient,
+        borderWidth: 3,
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: '#3BDB67',
+        pointBorderColor: '#fff',
+        pointRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: {
+          grid: { color: 'rgba(255, 255, 255, 0.05)' },
+          ticks: { color: '#94A3B8', font: { family: 'JetBrains Mono' } }
+        },
+        x: {
+          grid: { color: 'rgba(255, 255, 255, 0.05)' },
+          ticks: { color: '#94A3B8', font: { family: 'JetBrains Mono' } }
+        }
+      }
+    }
+  });
+}
+
+// 6. Micro Histogram Ticks
+function renderHistogramTicks() {
+  const bar = document.getElementById('histo-tick-bar');
+  if (!bar) return;
+
+  let html = '';
+  for (let i = 0; i < 48; i++) {
+    const isRed = (i >= 16 && i <= 24);
+    const color = isRed ? '#FF4757' : '#3BDB67';
+    const height = Math.floor(6 + Math.random() * 16);
+    html += `<div class="histo-bar" style="height: ${height}px; background-color: ${color};"></div>`;
+  }
+  bar.innerHTML = html;
+}
+
+// 7. Left Rail Navigation Switcher
+function switchNav(view) {
+  const viewCommand = document.getElementById('view-command-console');
+  const viewAnalytics = document.getElementById('view-analytics');
+  const viewDiagnostics = document.getElementById('view-diagnostics');
+  const badge = document.getElementById('active-view-badge');
+
+  const btnCommand = document.getElementById('nav-btn-command');
+  const btnAnalytics = document.getElementById('nav-btn-analytics');
+  const btnDiagnostics = document.getElementById('nav-btn-diagnostics');
+
+  [btnCommand, btnAnalytics, btnDiagnostics].forEach(btn => {
+    if (btn) btn.className = "w-10 h-10 rounded-lg text-slate-400 hover:text-white hover:bg-[#181E26] flex items-center justify-center border border-transparent transition-all";
+  });
+
+  const activeClass = "w-10 h-10 rounded-lg bg-[#181E26] text-[#3BDB67] flex items-center justify-center border border-[#3BDB67]/40 shadow-lg shadow-emerald-500/10 transition-all";
+
+  if (view === 'command') {
+    viewCommand.classList.remove('hidden');
+    viewAnalytics.classList.add('hidden');
+    viewDiagnostics.classList.add('hidden');
+    btnCommand.className = activeClass;
+    if (badge) badge.innerText = "COMMAND_CONSOLE";
     if (map) setTimeout(() => map.invalidateSize(), 150);
-  } else {
-    telemetryView.classList.add('hidden');
-    forecastView.classList.remove('hidden');
-    btnForecast.className = "px-5 py-2 rounded-full bg-emerald-500 text-slate-950 font-bold shadow-lg shadow-emerald-500/25 transition-all";
-    btnTelemetry.className = "px-5 py-2 rounded-full text-slate-400 hover:text-white transition-all";
-    if (!forecastChartInstance) initForecastChart();
+  } else if (view === 'analytics') {
+    viewCommand.classList.add('hidden');
+    viewAnalytics.classList.remove('hidden');
+    viewDiagnostics.classList.add('hidden');
+    btnAnalytics.className = activeClass;
+    if (badge) badge.innerText = "VECTOR_ANALYTICS";
+    setTimeout(() => initDeepAnalyticsChart(), 100);
+  } else if (view === 'diagnostics') {
+    viewCommand.classList.add('hidden');
+    viewAnalytics.classList.add('hidden');
+    viewDiagnostics.classList.remove('hidden');
+    btnDiagnostics.className = activeClass;
+    if (badge) badge.innerText = "TELEMETRY_STREAM";
   }
 }
 
-// 6. Live Streaming Simulation
-function startLiveTelemetry() {
-  const logsContainer = document.getElementById('terminal-logs');
+// 8. Realtime Ingestion Loop
+function startLiveCommand() {
   const pingEl = document.getElementById('sys-ping');
+  const clockEl = document.getElementById('log-clock');
+  const termFeed = document.getElementById('live-terminal-feed');
 
   setInterval(() => {
-    telemetryData.hotspots.forEach(spot => {
+    telemetryData.lines.forEach(l => {
       const flux = 1 + (Math.random() * 0.04 - 0.02);
-      spot.metrics.aqi = Math.round(spot.metrics.aqi * flux);
-      spot.metrics.pm2_5 = parseFloat((spot.metrics.pm2_5 * flux).toFixed(1));
+      l.aqi = Math.round(l.aqi * flux);
     });
 
-    const newPing = Math.floor(12 + Math.random() * 6);
+    const newPing = Math.floor(12 + Math.random() * 5);
     if (pingEl) pingEl.innerText = `${newPing}ms`;
 
-    renderHotspots();
+    const now = new Date();
+    const timeStr = now.toTimeString().split(' ')[0];
+    if (clockEl) clockEl.innerText = timeStr;
 
-    if (logsContainer) {
-      const randomSpot = telemetryData.hotspots[Math.floor(Math.random() * telemetryData.hotspots.length)];
-      const logLine = document.createElement('p');
-      logLine.className = 'log-enter text-emerald-400 font-mono text-[11px] leading-relaxed';
-      logLine.innerText = `> [SYNC] Node ${randomSpot.id} packet ingested at ${newPing}ms (AQI ${randomSpot.metrics.aqi})`;
-      logsContainer.prepend(logLine);
-      if (logsContainer.children.length > 3) logsContainer.removeChild(logsContainer.lastChild);
+    renderPipelines();
+    renderHistogramTicks();
+
+    if (termFeed) {
+      const randomLine = telemetryData.lines[Math.floor(Math.random() * telemetryData.lines.length)];
+      const entry = document.createElement('p');
+      entry.className = 'text-[#3BDB67] text-[11px] leading-relaxed';
+      entry.innerText = `> [${timeStr}] Packet Sync: ${randomLine.lineId} (${randomLine.name}) -> Ingested AQI ${randomLine.aqi} [Latency: ${newPing}ms]`;
+      termFeed.prepend(entry);
+      if (termFeed.children.length > 25) termFeed.removeChild(termFeed.lastChild);
     }
   }, 3500);
 }
 
 window.addEventListener('DOMContentLoaded', () => {
   initMap();
-  renderHotspots();
-  startLiveTelemetry();
+  renderPipelines();
+  initTimeCurveChart();
+  renderHistogramTicks();
+  startLiveCommand();
 });

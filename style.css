@@ -1,11 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 :root {
-  --bg-deep: #070A10;
-  --panel-bg: rgba(13, 19, 32, 0.72);
-  --panel-border: rgba(255, 255, 255, 0.07);
-  --accent-emerald: #10B981;
-  --accent-cyan: #06B6D4;
+  --bg-deep: #101419;
+  --bg-card: #181E26;
+  --bg-card-hover: #1E2530;
+  --border-subtle: #242D3A;
+  --accent-green: #3BDB67;
+  --accent-amber: #FF9F1C;
+  --accent-red: #FF4757;
+  --accent-cyan: #00D2D3;
 }
 
 * {
@@ -17,60 +20,113 @@
 body {
   background-color: var(--bg-deep);
   font-family: 'Plus Jakarta Sans', sans-serif;
-  color: #E2E8F0;
-  background-image: 
-    radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.08) 0%, transparent 45%),
-    radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.07) 0%, transparent 45%),
-    radial-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px);
-  background-size: 100% 100%, 100% 100%, 28px 28px;
+  color: #DDE2EB;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 .font-mono {
   font-family: 'JetBrains Mono', monospace;
 }
 
-/* Nixtio-Grade Obsidian Glassmorphism */
-.glass-panel {
-  background: var(--panel-bg);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid var(--panel-border);
-  box-shadow: 0 12px 35px -8px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.07);
-  border-radius: 1.25rem;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+/* Page Boot Stagger Animations */
+.anim-boot-header {
+  animation: slideDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.anim-boot-left {
+  animation: slideRight 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+}
+.anim-boot-map {
+  animation: scaleIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+}
+.anim-boot-bottom {
+  animation: slideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
 }
 
-.glass-panel:hover {
-  border-color: rgba(16, 185, 129, 0.3);
-  box-shadow: 0 16px 40px -10px rgba(16, 185, 129, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideRight {
+  from { opacity: 0; transform: translateX(-16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* Map Shell */
-.dark-map-frame {
+/* Industrial Card Shell */
+.cmd-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
   position: relative;
-  border-radius: 1rem;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cmd-card:hover {
+  border-color: #384659;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+}
+
+/* Pipeline Connecting Dots & Pulses */
+.flow-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: flowLight 2s infinite ease-in-out;
+}
+
+@keyframes flowLight {
+  0% { transform: scale(0.8); opacity: 0.5; }
+  50% { transform: scale(1.3); opacity: 1; filter: drop-shadow(0 0 6px currentColor); }
+  100% { transform: scale(0.8); opacity: 0.5; }
+}
+
+/* Map Shell & Tile Inversion */
+.dark-map-shell {
+  border-radius: 10px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--border-subtle);
+  position: relative;
 }
 
+.leaflet-tile-pane {
+  filter: brightness(0.65) invert(1) contrast(2.8) hue-rotate(205deg) saturate(0.2);
+}
 .leaflet-container {
-  background: #070A10 !important;
+  background: #101419 !important;
 }
 
-/* Radar Sweep Beam */
-.radar-sweep-cone {
+/* Active Radar Rotating Beam Sweep (Centered & Layered Above Tiles) */
+.radar-sweep-beam {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 320px;
-  height: 320px;
+  width: 260px;
+  height: 260px;
   transform: translate(-50%, -50%);
   border-radius: 50%;
   pointer-events: none;
-  background: conic-gradient(from 0deg, rgba(16, 185, 129, 0.32) 0deg, transparent 75deg, transparent 360deg);
-  animation: radarRotate 4.5s linear infinite;
-  z-index: 400;
+  background: conic-gradient(from 0deg, rgba(59, 219, 103, 0.4) 0deg, transparent 65deg, transparent 360deg);
+  animation: radarRotate 4s linear infinite;
+  z-index: 500;
+}
+
+.radar-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1px solid rgba(59, 219, 103, 0.2);
+  pointer-events: none;
+  z-index: 490;
 }
 
 @keyframes radarRotate {
@@ -78,7 +134,7 @@ body {
   to { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
-/* Pulsing Hotspot Rings */
+/* Hotspot Ping Rings */
 .marker-ring {
   position: absolute;
   border-radius: 50%;
@@ -90,27 +146,32 @@ body {
   100% { transform: scale(2.8); opacity: 0; }
 }
 
-/* Live Ingestion Log Animation */
-.log-enter {
-  animation: slideFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+/* Circular Gauge Animation */
+.gauge-svg circle {
+  transition: stroke-dashoffset 1s ease-in-out;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
 }
 
-@keyframes slideFadeIn {
-  0% { opacity: 0; transform: translateY(-5px); }
-  100% { opacity: 1; transform: translateY(0); }
+/* Micro Histogram Bars */
+.histo-bar {
+  width: 3px;
+  border-radius: 2px;
+  transition: height 0.3s ease;
 }
 
-/* Custom Sleek Scrollbar */
+/* Sleek Scrollbar */
 ::-webkit-scrollbar {
-  width: 5px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: #101419;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 10px;
+  background: #2D3748;
+  border-radius: 8px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(16, 185, 129, 0.4);
+  background: var(--accent-green);
 }
