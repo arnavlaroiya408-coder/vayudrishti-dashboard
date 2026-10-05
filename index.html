@@ -154,7 +154,11 @@
         <section class="cmd-card p-6 xl:col-span-5">
           <h3 class="font-bold text-base ink">Regional Spatial Air Quality Heatmap</h3>
           <p class="text-[11px] mute mb-3">Micro-station mesh interpolation • Jaipur [26.85°N, 75.81°E]</p>
-          <div class="dark-map-shell relative"><div id="map" class="w-full h-full"></div></div>
+          <div class="dark-map-shell relative">
+            <div id="map" class="w-full h-full"></div>
+            <!-- Rotating Radar Sweep Beam -->
+            <div class="radar-sweep-beam"></div>
+          </div>
           <div class="aqi-legend mt-4"></div>
           <div class="flex justify-between text-[10px] mute mt-1"><span>0-50 Good</span><span>51-100 Mod</span><span>101-150 Sens</span><span>151-200 Unhealthy</span><span>201+</span></div>
         </section>
@@ -227,7 +231,6 @@
 
   <script src="app.js"></script>
   <script>
-    // Soft trailing glow that lazily follows the cursor (separate from app.js)
     (function () {
       if (window.matchMedia('(pointer: coarse)').matches) return;
       const layers = [

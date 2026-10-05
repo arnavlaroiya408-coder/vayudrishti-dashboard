@@ -83,13 +83,41 @@ body {
 .qrow { display: flex; justify-content: space-between; background: #F6F9FB; padding: 9px 12px; border-radius: 12px; }
 
 /* Map (dark inset, like the screenshot heatmap) */
-.dark-map-shell { height: 300px; border-radius: 18px; overflow: hidden; border: 1px solid var(--line); background: #0B1A26; }
+.dark-map-shell { height: 300px; border-radius: 18px; overflow: hidden; border: 1px solid var(--line); background: #0B1A26; position: relative; }
 #map { width: 100%; height: 100%; min-height: 300px; display: block; }
 .leaflet-tile-pane { filter: brightness(.68) invert(1) contrast(2.4) hue-rotate(205deg) saturate(.25); opacity: .92; }
 .leaflet-container { background: #0B1A26; }
 .marker-ring { position: absolute; border-radius: 50%; animation: pulseExpand 2.2s cubic-bezier(.24, 0, .38, 1) infinite; }
 @keyframes pulseExpand { 0% { transform: scale(.6); opacity: .9; } 100% { transform: scale(2.6); opacity: 0; } }
 .aqi-legend { height: 6px; border-radius: 6px; background: linear-gradient(90deg, #10B981, #FBBF24, #F97316, #EF4444, #7C3AED); }
+
+/* Tactical 360° Radar Sweep Beam */
+.radar-sweep-beam {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 250px;
+  height: 250px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+  background: conic-gradient(
+    from 0deg,
+    rgba(16, 185, 129, 0.45) 0deg,
+    rgba(16, 185, 129, 0.12) 35deg,
+    transparent 65deg,
+    transparent 360deg
+  );
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  box-shadow: inset 0 0 25px rgba(16, 185, 129, 0.15), 0 0 15px rgba(16, 185, 129, 0.1);
+  animation: mapRadarSpin 3.5s linear infinite;
+  z-index: 500;
+}
+
+@keyframes mapRadarSpin {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
 
 /* Micro bars + status pips (used by app.js) */
 .histo-bar { width: 3.5px; border-radius: 4px; transition: height .35s ease; }
@@ -98,7 +126,7 @@ body {
 .metric-tile { transition: transform .25s ease, box-shadow .25s ease; }
 .metric-tile:hover { transform: translateY(-2px); box-shadow: 0 8px 18px -8px rgba(15, 42, 58, .2); }
 
-/* Re-skin of dark Tailwind classes that app.js injects (JS left untouched) */
+/* Re-skin of dark Tailwind classes that app.js injects */
 #pipeline-container .text-white { color: var(--ink) !important; }
 #pipeline-container .text-slate-300, #pipeline-container .text-slate-400 { color: var(--mute) !important; }
 #pipeline-container .bg-white\/\[0\.02\], #pipeline-container .bg-white\/5 { background: #F6F9FB !important; }
