@@ -1,4 +1,4 @@
-// 1. Mock JSON Data strictly as per guidelines
+// 1. Data Store strictly as per guidelines payload
 const telemetryData = {
   project: "VayuDrishti",
   region: "Jaipur Urban Sector",
@@ -31,11 +31,21 @@ const telemetryData = {
       coordinates: { lat: 26.8521, lng: 75.7644 },
       metrics: { aqi: 42, status: "Optimal Green", pm2_5: 14.2, pm10: 38.0, no2: 12.5, temp_celsius: 30.2, humidity_pct: 45, wind_speed_kmh: 15.2 }
     }
+  ],
+  forecast_48h: [
+    { interval: "+06h", avg_aqi: 120, pm2_5: 55, trend: "STABLE" },
+    { interval: "+12h", avg_aqi: 185, pm2_5: 98, trend: "DETERIORATING" },
+    { interval: "+18h", avg_aqi: 210, pm2_5: 135, trend: "PEAK_HAZARD" },
+    { interval: "+24h", avg_aqi: 160, pm2_5: 82, trend: "RECOVERING" },
+    { interval: "+36h", avg_aqi: 95, pm2_5: 38, trend: "IMPROVING" },
+    { interval: "+48h", avg_aqi: 48, pm2_5: 18, trend: "OPTIMAL" }
   ]
 };
 
-// 2. Leaflet Map Initialization centered at Jaipur
+// 2. Leaflet Map (Free clean tile layer)
 let map;
+let markerInstances = [];
+
 function initMap() {
   const jaipurCenter = [26.9124, 75.7873];
   map = L.map('map', {
@@ -43,12 +53,18 @@ function initMap() {
     attributionControl: false
   }).setView(jaipurCenter, 12);
 
-  // Soft Boho styled map tiles (CartoDB Positron)
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-    maxZoom: 18,
+  // Free OpenStreetMap Standard Tiles (No API key required)
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19
   }).addTo(map);
 
-  // Render Custom Pulsing Hotspot Markers
+  renderMarkers();
+}
+
+function renderMarkers() {
+  markerInstances.forEach(m => map.removeLayer(m));
+  markerInstances = [];
+
   telemetryData.hotspots.forEach(spot => {
     let colorClass = 'bg-emeraldLive';
     let ringColor = 'rgba(16, 185, 129, 0.4)';
@@ -80,10 +96,11 @@ function initMap() {
         <p class="text-slate-600">AQI: <strong>${spot.metrics.aqi}</strong> (${spot.metrics.status})</p>
       </div>
     `);
+    markerInstances.push(marker);
   });
 }
 
-// 3. Render Hotspot Cards in Right Panel
+// 3. Render Hotspot Cards
 function renderHotspots() {
   const container = document.getElementById('hotspots-list');
   container.innerHTML = telemetryData.hotspots.map(spot => {
@@ -115,7 +132,52 @@ function renderHotspots() {
   }).join('');
 }
 
-// 4. Tab Switching logic (Zero layout shift)
+// 4. Chart.js 48h Forecast Setup
+let forecastChartInstance = null;
+function initForecastChart() {
+  const ctx = document.getElementById('forecastChart');
+  if (!ctx) return;
+
+  const labels = telemetryData.forecast_48h.map(f => f.interval);
+  const aqiValues = telemetryData.forecast_48h.map(f => f.avg_aqi);
+
+  forecastChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: '48h Predictive AQI Index',
+        data: aqiValues,
+        borderColor: '#10B981',
+        backgroundColor: 'rgba(16, 185, 129, 0.15)',
+        borderWidth: 2.5,
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: '#059669',
+        pointRadius: 5
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: {
+          grid: { color: 'rgba(243, 236, 226, 0.8)' },
+          ticks: { font: { family: 'JetBrains Mono' } }
+        },
+        x: {
+          grid: { display: false },
+          ticks: { font: { family: 'JetBrains Mono' } }
+        }
+      }
+    }
+  });
+}
+
+// 5. Tab Navigation
 function switchTab(tab) {
   const telemetryView = document.getElementById('view-telemetry');
   const forecastView = document.getElementById('view-forecast');
@@ -127,17 +189,50 @@ function switchTab(tab) {
     forecastView.classList.add('hidden');
     btnTelemetry.className = "px-4 py-1.5 rounded-lg text-xs md:text-sm font-semibold transition-all bg-white text-deepMoss shadow-sm";
     btnForecast.className = "px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium text-slate-600 hover:text-deepMoss transition-all";
-    if (map) setTimeout(() => map.invalidateSize(), 100);
+    if (map) setTimeout(() => map.invalidateSize(), 150);
   } else {
     telemetryView.classList.add('hidden');
     forecastView.classList.remove('hidden');
     btnForecast.className = "px-4 py-1.5 rounded-lg text-xs md:text-sm font-semibold transition-all bg-white text-deepMoss shadow-sm";
     btnTelemetry.className = "px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium text-slate-600 hover:text-deepMoss transition-all";
+    if (!forecastChartInstance) initForecastChart();
   }
 }
 
-// Window load init
+// 6. Live Interval Stream Simulation (±1-3% mutation every 3.5s)
+function startLiveTelemetry() {
+  const logsContainer = document.getElementById('terminal-logs');
+  const pingEl = document.getElementById('sys-ping');
+
+  setInterval(() => {
+    // Mutate sensor metrics slightly
+    telemetryData.hotspots.forEach(spot => {
+      const flux = 1 + (Math.random() * 0.04 - 0.02); // ±2%
+      spot.metrics.aqi = Math.round(spot.metrics.aqi * flux);
+      spot.metrics.pm2_5 = parseFloat((spot.metrics.pm2_5 * flux).toFixed(1));
+    });
+
+    // Update Ping
+    const newPing = Math.floor(12 + Math.random() * 6);
+    if (pingEl) pingEl.innerText = `${newPing}ms`;
+
+    // Re-render UI
+    renderHotspots();
+
+    // Stream a mini terminal log
+    if (logsContainer) {
+      const randomSpot = telemetryData.hotspots[Math.floor(Math.random() * telemetryData.hotspots.length)];
+      const logLine = document.createElement('p');
+      logLine.innerText = `> [SYS_OK] ${randomSpot.location_name.split(' ')[0]} node pinged in ${newPing}ms`;
+      logsContainer.prepend(logLine);
+      if (logsContainer.children.length > 3) logsContainer.removeChild(logsContainer.lastChild);
+    }
+  }, 3500);
+}
+
+// Init on load
 window.addEventListener('DOMContentLoaded', () => {
   initMap();
   renderHotspots();
+  startLiveTelemetry();
 });
