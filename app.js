@@ -63,7 +63,7 @@ const telemetryData = {
 };
 
 // ==========================================
-// 2. CRYSTAL-CLEAR TACTICAL MAP INITIALIZATION
+// 2. TACTICAL SECTOR MAP INITIALIZATION
 // ==========================================
 let map;
 function initMap() {
@@ -71,9 +71,9 @@ function initMap() {
   map = L.map('map', {
     zoomControl: false,
     attributionControl: false
-  }).setView(jaipurCentroid, 12); // Balanced clean sector view
+  }).setView(jaipurCentroid, 11);
 
-  // Free OpenStreetMap Tiles (Zero API Key Required)
+  // High-Detail OpenStreetMap Tiles (Zero Watermark / Full Road Geometry)
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
   }).addTo(map);
@@ -82,23 +82,30 @@ function initMap() {
     const customIcon = L.divIcon({
       className: 'relative flex items-center justify-center',
       html: `
-        <div class="relative w-7 h-7 flex items-center justify-center cursor-pointer">
-          <div class="marker-ring w-7 h-7" style="background-color: ${line.color}55;"></div>
+        <div class="relative w-8 h-8 flex items-center justify-center cursor-pointer">
+          <div class="marker-ring w-8 h-8" style="background-color: ${line.color}45;"></div>
           <div class="w-3.5 h-3.5 rounded-full border-2 border-[#101419] z-10 shadow-lg" style="background-color: ${line.color}; box-shadow: 0 0 14px ${line.color};"></div>
         </div>
       `,
-      iconSize: [28, 28],
-      iconAnchor: [14, 14]
+      iconSize: [32, 32],
+      iconAnchor: [16, 16]
     });
 
     const marker = L.marker(line.coords, { icon: customIcon }).addTo(map);
     marker.bindPopup(`
-      <div style="background:#181E26; color:#fff; padding:6px 10px; border-radius:6px; font-family:monospace; font-size:11px; border:1px solid #242D3A;">
-        <strong style="color:${line.color};">${line.name}</strong><br/>
-        AQI: <b>${line.aqi}</b> (${line.status})
+      <div style="background:#141A22; color:#fff; padding:8px 12px; border-radius:8px; font-family:'JetBrains Mono', monospace; font-size:11px; border:1px solid #2D3748; box-shadow:0 10px 20px rgba(0,0,0,0.5);">
+        <strong style="color:${line.color}; font-size:12px;">${line.name}</strong><br/>
+        <div style="margin-top:4px; display:flex; gap:8px;">
+          <span>AQI: <b>${line.aqi}</b></span>
+          <span style="color:${line.color}; font-weight:bold;">[${line.status}]</span>
+        </div>
       </div>
     `);
   });
+
+  // Dual Resize Invalidation to prevent partial grey tiles
+  setTimeout(() => { if (map) map.invalidateSize(); }, 200);
+  setTimeout(() => { if (map) map.invalidateSize(); }, 600);
 }
 
 // ==========================================
@@ -336,7 +343,7 @@ function triggerEmergencyAnomaly() {
     termFeed.prepend(alertEntry);
   }
 
-  // 6 seconds baad recovery
+  // 6 seconds recovery
   setTimeout(() => {
     targetSpot.aqi = 218;
     targetSpot.status = "Hazardous";
@@ -378,6 +385,7 @@ function runPreloaderBoot() {
       clearInterval(interval);
       setTimeout(() => {
         overlay.classList.add('preloader-hidden');
+        if (map) map.invalidateSize();
       }, 350);
     }
   }, 260);
@@ -434,8 +442,12 @@ document.addEventListener('mousemove', (e) => {
 });
 
 // ==========================================
-// 12. DOM LOAD TRIGGER
+// 12. WINDOW RESIZE & INIT
 // ==========================================
+window.addEventListener('resize', () => {
+  if (map) map.invalidateSize();
+});
+
 window.addEventListener('DOMContentLoaded', () => {
   initMap();
   renderPipelines();

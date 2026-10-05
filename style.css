@@ -66,12 +66,28 @@ body {
   border: 1px solid var(--border-subtle);
   border-radius: 12px;
   position: relative;
+  overflow: hidden;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .cmd-card:hover {
   border-color: #384659;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+}
+
+.cmd-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: inherit;
+  background: radial-gradient(400px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(59, 219, 103, 0.08), transparent 40%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: 1;
+}
+.cmd-card:hover::before {
+  opacity: 1;
 }
 
 /* Pipeline Connecting Dots & Pulses */
@@ -88,34 +104,57 @@ body {
   100% { transform: scale(0.8); opacity: 0.5; }
 }
 
-/* Map Shell & Tile Inversion */
+/* ========================================= */
+/* MAP SHELL & FULL EDGE-TO-EDGE LEAFLET FIX */
+/* ========================================= */
 .dark-map-shell {
-  border-radius: 10px;
-  overflow: hidden;
-  border: 1px solid var(--border-subtle);
-  position: relative;
+  width: 100% !important;
+  height: 260px !important;
+  min-height: 260px !important;
+  position: relative !important;
+  overflow: hidden !important;
+  border-radius: 10px !important;
+  border: 1px solid var(--border-subtle) !important;
+  background-color: #0B0E14 !important;
 }
 
+#map {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 260px !important;
+  display: block !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 1 !important;
+}
+
+/* Native Dark Tiles - Pure Obsidian Depth */
 .leaflet-tile-pane {
-  filter: brightness(0.65) invert(1) contrast(2.8) hue-rotate(205deg) saturate(0.2);
-}
-.leaflet-container {
-  background: #101419 !important;
+  filter: contrast(1.15) brightness(0.95);
+  opacity: 1;
 }
 
-/* Active Radar Rotating Beam Sweep (Centered & Layered Above Tiles) */
+.leaflet-container {
+  background: #0B0E14 !important;
+}
+
+/* Rotating Radar Beam Sweep (Centered Over Map) */
 .radar-sweep-beam {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 260px;
-  height: 260px;
+  width: 240px;
+  height: 240px;
   transform: translate(-50%, -50%);
   border-radius: 50%;
   pointer-events: none;
-  background: conic-gradient(from 0deg, rgba(59, 219, 103, 0.4) 0deg, transparent 65deg, transparent 360deg);
+  background: conic-gradient(from 0deg, rgba(59, 219, 103, 0.45) 0deg, transparent 60deg, transparent 360deg);
   animation: radarRotate 4s linear infinite;
-  z-index: 500;
+  z-index: 400;
+  opacity: 0.7;
 }
 
 .radar-ring {
@@ -124,9 +163,25 @@ body {
   left: 50%;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  border: 1px solid rgba(59, 219, 103, 0.2);
+  border: 1px solid rgba(59, 219, 103, 0.25);
   pointer-events: none;
-  z-index: 490;
+  z-index: 390;
+}
+
+/* Radar Center Origin Pip */
+.dark-map-shell::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  background: #3BDB67;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 10px #3BDB67;
+  pointer-events: none;
+  z-index: 450;
 }
 
 @keyframes radarRotate {
@@ -158,6 +213,79 @@ body {
   width: 3px;
   border-radius: 2px;
   transition: height 0.3s ease;
+}
+
+/* High-End Industrial Preloader */
+#preloader-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: #0B0E14;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.6s ease;
+}
+
+#preloader-overlay.preloader-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.preloader-glow-ring {
+  box-shadow: 0 0 35px -5px rgba(59, 219, 103, 0.4);
+}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 768px) {
+  body {
+    overflow-x: hidden;
+  }
+  
+  aside.mobile-nav-bar {
+    width: 100% !important;
+    height: 56px !important;
+    top: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    flex-direction: row !important;
+    padding: 0 1.25rem !important;
+    border-right: none !important;
+    border-top: 1px solid #242D3A !important;
+    background: rgba(14, 18, 23, 0.95) !important;
+    backdrop-filter: blur(12px) !important;
+  }
+
+  aside.mobile-nav-bar .logo-container,
+  aside.mobile-nav-bar .version-text {
+    display: none !important;
+  }
+
+  aside.mobile-nav-bar nav {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-around !important;
+    width: 100% !important;
+    padding-top: 0 !important;
+    gap: 1rem !important;
+  }
+
+  .dark-map-shell {
+    height: 240px !important;
+    min-height: 240px !important;
+  }
+
+  #map {
+    min-height: 240px !important;
+  }
+
+  .radar-sweep-beam {
+    width: 180px;
+    height: 180px;
+  }
 }
 
 /* Sleek Scrollbar */
