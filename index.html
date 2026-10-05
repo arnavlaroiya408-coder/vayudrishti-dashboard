@@ -5,20 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VayuDrishti | Telemetry Matrix</title>
   
-  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Leaflet CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="p-4 md:p-6 lg:p-8 flex flex-col justify-between">
 
-  <!-- Floating Glass Nav Header -->
-  <header class="glass-card px-6 py-4 flex flex-wrap items-center justify-between gap-4 mb-6">
+  <!-- Header: Floating Glass Nav Capsule -->
+  <header class="glass-panel px-6 py-4 flex flex-wrap items-center justify-between gap-4 mb-6">
     <div class="flex items-center space-x-3">
       <div class="relative flex items-center justify-center">
         <span class="w-3 h-3 rounded-full bg-emerald-400"></span>
@@ -27,18 +24,18 @@
       <div>
         <h1 class="text-lg md:text-xl font-bold tracking-tight text-white flex items-center gap-2">
           VayuDrishti
-          <span class="text-[10px] font-mono tracking-widest px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">JAIPUR_NODE</span>
+          <span class="text-[10px] font-mono tracking-widest px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">JAIPUR_SURVEILLANCE</span>
         </h1>
       </div>
     </div>
 
     <!-- Toggle Capsule Tabs -->
-    <div class="flex bg-slate-900/80 p-1 rounded-full border border-white/10 text-xs font-semibold">
-      <button id="tab-telemetry-btn" onclick="switchTab('telemetry')" class="px-5 py-2 rounded-full bg-emerald-500 text-slate-950 font-bold shadow-lg shadow-emerald-500/20 transition-all">Telemetry Grid</button>
-      <button id="tab-forecast-btn" onclick="switchTab('forecast')" class="px-5 py-2 rounded-full text-slate-400 hover:text-white transition-all">48h Predictive AI</button>
+    <div class="flex bg-slate-900/90 p-1.5 rounded-full border border-white/10 text-xs font-semibold">
+      <button id="tab-telemetry-btn" onclick="switchTab('telemetry')" class="px-5 py-2 rounded-full bg-emerald-500 text-slate-950 font-bold shadow-lg shadow-emerald-500/25 transition-all">Telemetry Grid</button>
+      <button id="tab-forecast-btn" onclick="switchTab('forecast')" class="px-5 py-2 rounded-full text-slate-400 hover:text-white transition-all">48h Predictive Curve</button>
     </div>
 
-    <!-- System Vital Badges -->
+    <!-- System Vital Status Badges -->
     <div class="flex items-center space-x-5 font-mono text-xs text-slate-400">
       <div>PING: <span id="sys-ping" class="text-emerald-400 font-bold">14ms</span></div>
       <div>BUFFER: <span class="text-white font-bold">99.8%</span></div>
@@ -48,20 +45,20 @@
     </div>
   </header>
 
-  <!-- Main View Area -->
+  <!-- Main Content Layout -->
   <main class="flex-1">
-    <!-- View 1: Telemetry (Map + Hotspot Cards) -->
+    <!-- View 1: Telemetry (Dark Radar Map + Nodes Feed) -->
     <div id="view-telemetry" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
       
-      <!-- Left: Dark Tactical Map (7 Cols) -->
+      <!-- Left: Dark Tactical Radar Map (7 Cols) -->
       <div class="lg:col-span-7 space-y-4">
-        <div class="glass-card p-4 relative">
+        <div class="glass-panel p-4 relative">
           <div class="flex justify-between items-center px-1 pb-3 text-xs font-mono text-slate-400 border-b border-white/5 mb-3">
-            <span class="flex items-center gap-2">
+            <span class="flex items-center gap-2 text-slate-300">
               <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-              RADAR TELEMETRY SCANNER
+              GEOSPATIAL RADAR SURVEILLANCE
             </span>
-            <span class="text-slate-500 text-[11px]">COORDINATES [26.8550° N, 75.8100° E]</span>
+            <span class="text-slate-500 text-[11px]">SECTOR JAIPUR [26.8550° N, 75.8100° E]</span>
           </div>
 
           <div class="dark-map-frame relative">
@@ -69,11 +66,13 @@
           </div>
         </div>
 
-        <!-- Terminal Console -->
-        <div class="glass-card p-4 font-mono text-xs border-emerald-500/20">
+        <!-- Terminal Logs -->
+        <div class="glass-panel p-4 font-mono text-xs border-emerald-500/20">
           <div class="flex justify-between text-slate-400 text-[10px] pb-2 border-b border-white/5 mb-2 font-bold tracking-widest uppercase">
-            <span class="text-slate-400">TELEMETRY_DATA_INGESTION_LOGS</span>
-            <span class="text-emerald-400">STATUS: REAL_TIME</span>
+            <span class="text-slate-400">LIVE_INGESTION_STREAM</span>
+            <span class="text-emerald-400 flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> SYNCHRONIZED
+            </span>
           </div>
           <div id="terminal-logs" class="space-y-1.5 overflow-hidden h-[58px]">
             <p class="text-emerald-400">> [INITIALIZE] Telemetry socket linked to Jaipur Sensor Array...</p>
@@ -81,25 +80,25 @@
         </div>
       </div>
 
-      <!-- Right: Hotspot Nodes (5 Cols) -->
+      <!-- Right: Hotspots Feed (5 Cols) -->
       <div class="lg:col-span-5 space-y-4">
         <div class="flex justify-between items-center px-2">
           <h2 class="text-xs font-mono font-bold text-slate-400 tracking-wider">ACTIVE HOTSPOT SENSORS</h2>
-          <span class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-white/10">3 ONLINE</span>
+          <span class="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-white/10">3 NODES ONLINE</span>
         </div>
 
         <div id="hotspots-list" class="space-y-3.5">
-          <!-- Dynamically Rendered Hotspots -->
+          <!-- Hotspots render dynamically -->
         </div>
       </div>
     </div>
 
-    <!-- View 2: Forecast Chart -->
-    <div id="view-forecast" class="hidden glass-card p-6 md:p-8">
+    <!-- View 2: Forecast Analytics -->
+    <div id="view-forecast" class="hidden glass-panel p-6 md:p-8">
       <div class="flex justify-between items-center mb-6">
         <div>
           <h2 class="text-lg font-bold text-white">48-Hour Predictive Telemetry Curve</h2>
-          <p class="text-xs text-slate-400 font-mono mt-0.5">Atmospheric dispersion model for Jaipur Central Core</p>
+          <p class="text-xs text-slate-400 font-mono mt-0.5">Atmospheric dispersion forecast for Jaipur Central Urban Belt</p>
         </div>
         <div class="px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 font-mono text-xs font-bold">
           CONFIDENCE: 94.2%
@@ -114,7 +113,7 @@
   <!-- Footer -->
   <footer class="mt-8 pt-4 border-t border-white/5 flex flex-wrap justify-between items-center text-xs text-slate-500 font-mono">
     <p>VayuDrishti Engine • Built for InnovateX</p>
-    <p>Architecture: Micro-telemetry client v2.4</p>
+    <p>Architecture: Dark Obsidian Telemetry Client</p>
   </footer>
 
   <script src="app.js"></script>

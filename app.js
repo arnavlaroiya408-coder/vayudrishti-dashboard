@@ -1,4 +1,4 @@
-// 1. Data Store strictly as per InnovateX guidelines payload
+// 1. Telemetry Data
 const telemetryData = {
   project: "VayuDrishti",
   region: "Jaipur Urban Sector",
@@ -53,7 +53,7 @@ function initMap() {
     attributionControl: false
   }).setView(jaipurCentroid, 11);
 
-  // Free OpenStreetMap Standard Tiles (reliable & clean)
+  // Free OpenStreetMap Tiles (Zero API Key required)
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
   }).addTo(map);
@@ -90,7 +90,7 @@ function renderMarkers() {
       html: `
         <div class="relative w-8 h-8 flex items-center justify-center">
           <div class="marker-ring w-8 h-8" style="background-color: ${ringBg};"></div>
-          <div class="w-3.5 h-3.5 rounded-full border-2 border-slate-900 shadow-lg z-10" style="background-color: ${pinColor}; box-shadow: 0 0 12px ${pinColor};"></div>
+          <div class="w-3.5 h-3.5 rounded-full border-2 border-slate-900 shadow-lg z-10" style="background-color: ${pinColor}; box-shadow: 0 0 14px ${pinColor};"></div>
         </div>
       `,
       iconSize: [32, 32],
@@ -108,7 +108,7 @@ function renderMarkers() {
   });
 }
 
-// 3. Render Hotspot Cards (Obsidian Nixtio Style)
+// 3. Render Cards with Nixtio Micro-metrics & Status Pills
 function renderHotspots() {
   const container = document.getElementById('hotspots-list');
   container.innerHTML = telemetryData.hotspots.map(spot => {
@@ -120,7 +120,7 @@ function renderHotspots() {
                     'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
 
     return `
-      <div class="glass-card p-4 space-y-3.5 border border-white/5 hover:border-emerald-500/30 transition-all">
+      <div class="glass-panel p-4 space-y-3.5 border border-white/5 hover:border-emerald-500/30 transition-all">
         <div class="flex justify-between items-start">
           <div>
             <h3 class="font-bold text-sm text-white tracking-wide">${spot.location_name}</h3>
@@ -154,14 +154,14 @@ function renderHotspots() {
   }).join('');
 }
 
-// 4. Futuristic Neon Forecast Chart
+// 4. Futuristic Neon Forecast Chart (Chart.js)
 let forecastChartInstance = null;
 function initForecastChart() {
   const ctx = document.getElementById('forecastChart');
   if (!ctx) return;
 
   const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 300);
-  gradient.addColorStop(0, 'rgba(16, 185, 129, 0.35)');
+  gradient.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
   gradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
 
   forecastChartInstance = new Chart(ctx, {
@@ -213,13 +213,13 @@ function switchTab(tab) {
   if (tab === 'telemetry') {
     telemetryView.classList.remove('hidden');
     forecastView.classList.add('hidden');
-    btnTelemetry.className = "px-5 py-2 rounded-full bg-emerald-500 text-slate-950 font-bold shadow-lg shadow-emerald-500/20 transition-all";
+    btnTelemetry.className = "px-5 py-2 rounded-full bg-emerald-500 text-slate-950 font-bold shadow-lg shadow-emerald-500/25 transition-all";
     btnForecast.className = "px-5 py-2 rounded-full text-slate-400 hover:text-white transition-all";
     if (map) setTimeout(() => map.invalidateSize(), 150);
   } else {
     telemetryView.classList.add('hidden');
     forecastView.classList.remove('hidden');
-    btnForecast.className = "px-5 py-2 rounded-full bg-emerald-500 text-slate-950 font-bold shadow-lg shadow-emerald-500/20 transition-all";
+    btnForecast.className = "px-5 py-2 rounded-full bg-emerald-500 text-slate-950 font-bold shadow-lg shadow-emerald-500/25 transition-all";
     btnTelemetry.className = "px-5 py-2 rounded-full text-slate-400 hover:text-white transition-all";
     if (!forecastChartInstance) initForecastChart();
   }
@@ -246,7 +246,7 @@ function startLiveTelemetry() {
       const randomSpot = telemetryData.hotspots[Math.floor(Math.random() * telemetryData.hotspots.length)];
       const logLine = document.createElement('p');
       logLine.className = 'log-enter text-emerald-400 font-mono text-[11px] leading-relaxed';
-      logLine.innerText = `> [SYNC] Node ${randomSpot.id} ingested at ${newPing}ms (AQI ${randomSpot.metrics.aqi})`;
+      logLine.innerText = `> [SYNC] Node ${randomSpot.id} packet ingested at ${newPing}ms (AQI ${randomSpot.metrics.aqi})`;
       logsContainer.prepend(logLine);
       if (logsContainer.children.length > 3) logsContainer.removeChild(logsContainer.lastChild);
     }
