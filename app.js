@@ -1,17 +1,18 @@
 // ==========================================
-// 1. TELEMETRY DATA (JAIPUR URBAN CORE SECTOR)
+// 1. TELEMETRY DATA & TIMEFRAME DATASETS
 // ==========================================
 const telemetryData = {
   project: "VayuDrishti",
-  region: "Jaipur Urban Sector",
+  region: "Jaipur Urban Core Sector",
   timestamp: new Date().toISOString(),
+  currentTimeframe: 'realtime',
   lines: [
     {
       lineId: "Line 1",
       name: "Sitapura Industrial Area",
       aqi: 218,
-      status: "Hazardous",
-      color: "#FF4757",
+      status: "Elevated Hazard",
+      color: "#FB7185", // Soft Rose Coral
       stages: [
         { label: "Aerosol Feed", state: "active", metric: "142.5 µg" },
         { label: "PM10 Filter", state: "warning", metric: "260.1 µg" },
@@ -25,7 +26,7 @@ const telemetryData = {
       name: "MI Road Commercial Corridor",
       aqi: 145,
       status: "Moderate",
-      color: "#FF9F1C",
+      color: "#FBBF24", // Warm Amber
       stages: [
         { label: "Urban Traffic", state: "active", metric: "68.1 µg" },
         { label: "NO2 Adsorption", state: "active", metric: "31.0 ppm" },
@@ -39,7 +40,7 @@ const telemetryData = {
       name: "Mansarovar Sector 7",
       aqi: 42,
       status: "Optimal",
-      color: "#3BDB67",
+      color: "#10E79D", // Spring Mint
       stages: [
         { label: "Eco Flora Array", state: "active", metric: "14.2 µg" },
         { label: "PM10 Scrubber", state: "active", metric: "38.0 µg" },
@@ -49,21 +50,76 @@ const telemetryData = {
       coords: [26.8521, 75.7644]
     }
   ],
-  forecast_48h: [
-    { interval: "+00h", aqi: 110 },
-    { interval: "+06h", aqi: 135 },
-    { interval: "+12h", aqi: 195 },
-    { interval: "+18h", aqi: 218 },
-    { interval: "+24h", aqi: 170 },
-    { interval: "+30h", aqi: 140 },
-    { interval: "+36h", aqi: 95 },
-    { interval: "+42h", aqi: 65 },
-    { interval: "+48h", aqi: 42 }
-  ]
+  datasets: {
+    realtime: {
+      title: "Realtime Dispersion Trajectory",
+      desc: "Live 20-minute rolling vector ingestion stream",
+      labels: ["-20m", "-15m", "-10m", "-05m", "Now", "+05m", "+10m", "+15m", "+20m"],
+      timelineLabels: ["-20m", "-10m", "Now", "+10m", "+20m"],
+      data: [120, 126, 138, 142, 145, 140, 134, 128, 122],
+      ticksCount: 36
+    },
+    "24h": {
+      title: "24h Dispersion Trajectory",
+      desc: "Diurnal atmospheric particulate drift & sunlight inversion",
+      labels: ["00:00", "03:00", "06:00", "09:00", "12:00", "15:00", "18:00", "21:00", "24:00"],
+      timelineLabels: ["00:00", "06:00", "12:00", "18:00", "24:00"],
+      data: [85, 92, 148, 192, 218, 185, 160, 132, 98],
+      ticksCount: 24
+    },
+    "48h": {
+      title: "48h Dispersion Trajectory",
+      desc: "Neural dispersion tensor & predictive trajectory curve",
+      labels: ["+00h", "+06h", "+12h", "+18h", "+24h", "+30h", "+36h", "+42h", "+48h"],
+      timelineLabels: ["+00h", "+12h", "+24h", "+36h", "+48h"],
+      data: [110, 135, 195, 218, 170, 140, 95, 65, 42],
+      ticksCount: 48
+    }
+  }
 };
 
 // ==========================================
-// 2. TACTICAL SECTOR MAP INITIALIZATION
+// 2. TIMEFRAME SWITCHER HANDLER
+// ==========================================
+function setTimeframe(tf) {
+  playTacticalBeep(680, 'sine', 0.05);
+  telemetryData.currentTimeframe = tf;
+
+  const btnRealtime = document.getElementById('btn-tf-realtime');
+  const btn24h = document.getElementById('btn-tf-24h');
+  const btn48h = document.getElementById('btn-tf-48h');
+
+  const activeClass = "px-3 py-1.5 rounded-xl bg-white/10 text-white font-semibold shadow-sm transition-all";
+  const inactiveClass = "px-3 py-1.5 rounded-xl text-slate-400 hover:text-white transition-all";
+
+  if (btnRealtime) btnRealtime.className = (tf === 'realtime') ? activeClass : inactiveClass;
+  if (btn24h) btn24h.className = (tf === '24h') ? activeClass : inactiveClass;
+  if (btn48h) btn48h.className = (tf === '48h') ? activeClass : inactiveClass;
+
+  const selectedData = telemetryData.datasets[tf];
+  if (selectedData) {
+    const titleEl = document.getElementById('trajectory-chart-title');
+    const descEl = document.getElementById('trajectory-chart-desc');
+    const timelineEl = document.getElementById('histo-timeline-labels');
+
+    if (titleEl) titleEl.innerText = selectedData.title;
+    if (descEl) descEl.innerText = selectedData.desc;
+    if (timelineEl) {
+      timelineEl.innerHTML = selectedData.timelineLabels.map(l => `<span>${l}</span>`).join('');
+    }
+
+    if (timeChart) {
+      timeChart.data.labels = selectedData.labels;
+      timeChart.data.datasets[0].data = selectedData.data;
+      timeChart.update('active');
+    }
+
+    renderHistogramTicks(selectedData.ticksCount);
+  }
+}
+
+// ==========================================
+// 3. TACTICAL SECTOR MAP INITIALIZATION
 // ==========================================
 let map;
 function initMap() {
@@ -73,7 +129,6 @@ function initMap() {
     attributionControl: false
   }).setView(jaipurCentroid, 11);
 
-  // High-Detail OpenStreetMap Tiles (Zero Watermark / Full Road Geometry)
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
   }).addTo(map);
@@ -83,8 +138,8 @@ function initMap() {
       className: 'relative flex items-center justify-center',
       html: `
         <div class="relative w-8 h-8 flex items-center justify-center cursor-pointer">
-          <div class="marker-ring w-8 h-8" style="background-color: ${line.color}45;"></div>
-          <div class="w-3.5 h-3.5 rounded-full border-2 border-[#101419] z-10 shadow-lg" style="background-color: ${line.color}; box-shadow: 0 0 14px ${line.color};"></div>
+          <div class="marker-ring w-8 h-8" style="background-color: ${line.color}35;"></div>
+          <div class="w-3 h-3 rounded-full border-2 border-[#080B10] z-10 shadow-lg" style="background-color: ${line.color}; box-shadow: 0 0 16px ${line.color};"></div>
         </div>
       `,
       iconSize: [32, 32],
@@ -93,49 +148,48 @@ function initMap() {
 
     const marker = L.marker(line.coords, { icon: customIcon }).addTo(map);
     marker.bindPopup(`
-      <div style="background:#141A22; color:#fff; padding:8px 12px; border-radius:8px; font-family:'JetBrains Mono', monospace; font-size:11px; border:1px solid #2D3748; box-shadow:0 10px 20px rgba(0,0,0,0.5);">
+      <div style="background:#111827; color:#fff; padding:8px 12px; border-radius:12px; font-family:'Plus Jakarta Sans', sans-serif; font-size:11px; border:1px solid rgba(255,255,255,0.08); box-shadow:0 12px 25px rgba(0,0,0,0.5);">
         <strong style="color:${line.color}; font-size:12px;">${line.name}</strong><br/>
         <div style="margin-top:4px; display:flex; gap:8px;">
           <span>AQI: <b>${line.aqi}</b></span>
-          <span style="color:${line.color}; font-weight:bold;">[${line.status}]</span>
+          <span style="color:${line.color}; font-weight:600;">[${line.status}]</span>
         </div>
       </div>
     `);
   });
 
-  // Dual Resize Invalidation to prevent partial grey tiles
   setTimeout(() => { if (map) map.invalidateSize(); }, 200);
   setTimeout(() => { if (map) map.invalidateSize(); }, 600);
 }
 
 // ==========================================
-// 3. PIPELINE MATRIX RENDERING
+// 4. PIPELINE MATRIX RENDERING
 // ==========================================
 function renderPipelines() {
   const container = document.getElementById('pipeline-container');
   if (!container) return;
   container.innerHTML = telemetryData.lines.map(line => {
     return `
-      <div class="bg-[#12171E] p-3.5 rounded-xl border border-[#242D3A] space-y-3">
-        <div class="flex justify-between items-center text-xs font-mono">
-          <div class="flex items-center gap-2">
-            <span class="px-2 py-0.5 rounded bg-[#181E26] text-white font-bold border border-[#242D3A]">${line.lineId}</span>
-            <span class="text-slate-300 font-bold tracking-wide">${line.name}</span>
+      <div class="bg-white/[0.02] p-4 rounded-2xl border border-white/5 space-y-3 hover:border-emerald-500/30 transition-all">
+        <div class="flex justify-between items-center text-xs">
+          <div class="flex items-center gap-2.5">
+            <span class="px-2.5 py-1 rounded-xl bg-white/5 text-slate-300 font-mono text-[11px] font-bold border border-white/5">${line.lineId}</span>
+            <span class="text-white font-bold tracking-tight text-sm">${line.name}</span>
           </div>
-          <div class="flex items-center gap-2 font-bold" style="color: ${line.color}">
-            <span class="w-2 h-2 rounded-full flow-pulse" style="background-color: ${line.color}"></span>
+          <div class="flex items-center gap-2 font-bold px-3 py-1 rounded-full text-xs" style="color: ${line.color}; background-color: ${line.color}15; border: 1px solid ${line.color}30;">
+            <span class="w-2 h-2 rounded-full animate-pulse" style="background-color: ${line.color};"></span>
             AQI ${line.aqi} • ${line.status}
           </div>
         </div>
 
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 pt-1">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 pt-1">
           ${line.stages.map(st => `
-            <div class="bg-[#181E26] p-2.5 rounded-lg border border-[#242D3A] relative hover:border-[#384659] transition-all">
-              <div class="flex justify-between items-center text-[10px] font-mono text-slate-400 mb-1">
+            <div class="metric-tile bg-white/[0.02] p-3 rounded-2xl border border-white/5 hover:border-white/15 transition-all">
+              <div class="flex justify-between items-center text-[10px] text-slate-400 mb-1 font-medium">
                 <span>${st.label}</span>
-                <span class="w-1.5 h-1.5 rounded-full" style="background-color: ${line.color}"></span>
+                <span class="w-1.5 h-1.5 rounded-full status-pip" style="background-color: ${line.color}; color:${line.color};"></span>
               </div>
-              <div class="text-sm font-bold text-white font-mono">${st.metric}</div>
+              <div class="text-sm font-extrabold text-white font-mono tracking-tight">${st.metric}</div>
             </div>
           `).join('')}
         </div>
@@ -145,7 +199,7 @@ function renderPipelines() {
 }
 
 // ==========================================
-// 4. PREDICTIVE CHARTS (CHART.JS)
+// 5. CHARTS INITIALIZATION (CHART.JS)
 // ==========================================
 let timeChart;
 function initTimeCurveChart() {
@@ -153,24 +207,27 @@ function initTimeCurveChart() {
   if (!ctx) return;
 
   const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 140);
-  gradient.addColorStop(0, 'rgba(59, 219, 103, 0.45)');
-  gradient.addColorStop(1, 'rgba(59, 219, 103, 0.02)');
+  gradient.addColorStop(0, 'rgba(16, 231, 157, 0.35)');
+  gradient.addColorStop(0.7, 'rgba(6, 182, 212, 0.08)');
+  gradient.addColorStop(1, 'rgba(16, 231, 157, 0.0)');
+
+  const activeDataset = telemetryData.datasets[telemetryData.currentTimeframe];
 
   timeChart = new Chart(ctx, {
     type: 'line',
     data: {
-      labels: telemetryData.forecast_48h.map(f => f.interval),
+      labels: activeDataset.labels,
       datasets: [{
         label: 'Dispersion Vector',
-        data: telemetryData.forecast_48h.map(f => f.aqi),
-        borderColor: '#3BDB67',
+        data: activeDataset.data,
+        borderColor: '#10E79D',
         backgroundColor: gradient,
-        borderWidth: 2.5,
+        borderWidth: 2.8,
         fill: true,
         tension: 0.45,
-        pointBackgroundColor: '#00D2D3',
-        pointBorderColor: '#fff',
-        pointBorderWidth: 1.5,
+        pointBackgroundColor: '#080B10',
+        pointBorderColor: '#10E79D',
+        pointBorderWidth: 2,
         pointRadius: 4,
         pointHoverRadius: 6
       }]
@@ -181,12 +238,12 @@ function initTimeCurveChart() {
       plugins: { legend: { display: false } },
       scales: {
         y: {
-          grid: { color: 'rgba(255, 255, 255, 0.05)' },
-          ticks: { color: '#64748B', font: { family: 'JetBrains Mono', size: 9 } }
+          grid: { color: 'rgba(255, 255, 255, 0.04)' },
+          ticks: { color: '#64748B', font: { family: 'Plus Jakarta Sans', size: 10 } }
         },
         x: {
           grid: { display: false },
-          ticks: { color: '#64748B', font: { family: 'JetBrains Mono', size: 9 } }
+          ticks: { color: '#64748B', font: { family: 'Plus Jakarta Sans', size: 10 } }
         }
       }
     }
@@ -199,24 +256,24 @@ function initDeepAnalyticsChart() {
   if (!ctx || deepChart) return;
 
   const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 360);
-  gradient.addColorStop(0, 'rgba(0, 210, 211, 0.4)');
-  gradient.addColorStop(1, 'rgba(0, 210, 211, 0.0)');
+  gradient.addColorStop(0, 'rgba(6, 182, 212, 0.35)');
+  gradient.addColorStop(1, 'rgba(6, 182, 212, 0.0)');
 
   deepChart = new Chart(ctx, {
     type: 'line',
     data: {
-      labels: telemetryData.forecast_48h.map(f => f.interval),
+      labels: telemetryData.datasets["48h"].labels,
       datasets: [{
         label: 'Full Vector Dispersion AQI',
-        data: telemetryData.forecast_48h.map(f => f.aqi),
-        borderColor: '#00D2D3',
+        data: telemetryData.datasets["48h"].data,
+        borderColor: '#06B6D4',
         backgroundColor: gradient,
         borderWidth: 3,
         fill: true,
         tension: 0.4,
-        pointBackgroundColor: '#3BDB67',
+        pointBackgroundColor: '#10E79D',
         pointBorderColor: '#fff',
-        pointRadius: 6
+        pointRadius: 5
       }]
     },
     options: {
@@ -225,12 +282,12 @@ function initDeepAnalyticsChart() {
       plugins: { legend: { display: false } },
       scales: {
         y: {
-          grid: { color: 'rgba(255, 255, 255, 0.05)' },
-          ticks: { color: '#94A3B8', font: { family: 'JetBrains Mono' } }
+          grid: { color: 'rgba(255, 255, 255, 0.04)' },
+          ticks: { color: '#94A3B8', font: { family: 'Plus Jakarta Sans' } }
         },
         x: {
-          grid: { color: 'rgba(255, 255, 255, 0.05)' },
-          ticks: { color: '#94A3B8', font: { family: 'JetBrains Mono' } }
+          grid: { color: 'rgba(255, 255, 255, 0.04)' },
+          ticks: { color: '#94A3B8', font: { family: 'Plus Jakarta Sans' } }
         }
       }
     }
@@ -238,16 +295,16 @@ function initDeepAnalyticsChart() {
 }
 
 // ==========================================
-// 5. MICRO HISTOGRAM TICKS
+// 6. MICRO ACTIVITY BARS
 // ==========================================
-function renderHistogramTicks() {
+function renderHistogramTicks(count = 36) {
   const bar = document.getElementById('histo-tick-bar');
   if (!bar) return;
 
   let html = '';
-  for (let i = 0; i < 48; i++) {
-    const isRed = (i >= 16 && i <= 24);
-    const color = isRed ? '#FF4757' : '#3BDB67';
+  for (let i = 0; i < count; i++) {
+    const isSpike = (i % 7 === 0);
+    const color = isSpike ? '#FB7185' : '#10E79D';
     const height = Math.floor(6 + Math.random() * 16);
     html += `<div class="histo-bar" style="height: ${height}px; background-color: ${color};"></div>`;
   }
@@ -255,7 +312,7 @@ function renderHistogramTicks() {
 }
 
 // ==========================================
-// 6. LEFT RAIL NAVIGATION CONTROLLER
+// 7. NAVIGATION SWITCHER
 // ==========================================
 function switchNav(view) {
   playTacticalBeep(720, 'sine', 0.06);
@@ -263,43 +320,39 @@ function switchNav(view) {
   const viewCommand = document.getElementById('view-command-console');
   const viewAnalytics = document.getElementById('view-analytics');
   const viewDiagnostics = document.getElementById('view-diagnostics');
-  const badge = document.getElementById('active-view-badge');
 
   const btnCommand = document.getElementById('nav-btn-command');
   const btnAnalytics = document.getElementById('nav-btn-analytics');
   const btnDiagnostics = document.getElementById('nav-btn-diagnostics');
 
   [btnCommand, btnAnalytics, btnDiagnostics].forEach(btn => {
-    if (btn) btn.className = "w-10 h-10 rounded-lg text-slate-400 hover:text-white hover:bg-[#181E26] flex items-center justify-center border border-transparent transition-all";
+    if (btn) btn.className = "w-11 h-11 rounded-2xl text-slate-400 hover:text-white hover:bg-white/5 flex items-center justify-center transition-all";
   });
 
-  const activeClass = "w-10 h-10 rounded-lg bg-[#181E26] text-[#3BDB67] flex items-center justify-center border border-[#3BDB67]/40 shadow-lg shadow-emerald-500/10 transition-all";
+  const activeClass = "w-11 h-11 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20 shadow-md shadow-emerald-500/10 transition-all";
 
   if (view === 'command') {
     if (viewCommand) viewCommand.classList.remove('hidden');
     if (viewAnalytics) viewAnalytics.classList.add('hidden');
     if (viewDiagnostics) viewDiagnostics.classList.add('hidden');
     if (btnCommand) btnCommand.className = activeClass;
-    if (badge) badge.innerText = "COMMAND_CONSOLE";
     if (map) setTimeout(() => map.invalidateSize(), 150);
   } else if (view === 'analytics') {
     if (viewCommand) viewCommand.classList.add('hidden');
     if (viewAnalytics) viewAnalytics.classList.remove('hidden');
     if (viewDiagnostics) viewDiagnostics.classList.add('hidden');
     if (btnAnalytics) btnAnalytics.className = activeClass;
-    if (badge) badge.innerText = "VECTOR_ANALYTICS";
     setTimeout(() => initDeepAnalyticsChart(), 100);
   } else if (view === 'diagnostics') {
     if (viewCommand) viewCommand.classList.add('hidden');
     if (viewAnalytics) viewAnalytics.classList.add('hidden');
     if (viewDiagnostics) viewDiagnostics.classList.remove('hidden');
     if (btnDiagnostics) btnDiagnostics.className = activeClass;
-    if (badge) badge.innerText = "TELEMETRY_STREAM";
   }
 }
 
 // ==========================================
-// 7. WEB AUDIO API SYNTHESIZER
+// 8. WEB AUDIO SYNTHESIZER
 // ==========================================
 let audioCtx = null;
 function playTacticalBeep(freq = 600, type = 'sine', duration = 0.08) {
@@ -310,7 +363,7 @@ function playTacticalBeep(freq = 600, type = 'sine', duration = 0.08) {
     const gain = audioCtx.createGain();
     osc.type = type;
     osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-    gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
     osc.connect(gain);
     gain.connect(audioCtx.destination);
@@ -320,7 +373,7 @@ function playTacticalBeep(freq = 600, type = 'sine', duration = 0.08) {
 }
 
 // ==========================================
-// 8. SIMULATE EMERGENCY ANOMALY INJECTION
+// 9. CRISIS SIMULATION TRIGGER
 // ==========================================
 let isAnomalyActive = false;
 function triggerEmergencyAnomaly() {
@@ -338,15 +391,14 @@ function triggerEmergencyAnomaly() {
   const termFeed = document.getElementById('live-terminal-feed');
   if (termFeed) {
     const alertEntry = document.createElement('p');
-    alertEntry.className = 'text-[#FF4757] text-[11px] font-bold tracking-wide animate-pulse';
-    alertEntry.innerText = `>> [CRITICAL ALERT] Rapid PM2.5 Inversion Spike Detected at Sitapura Node! Automated scrubbing triggered!`;
+    alertEntry.className = 'text-[#FB7185] text-xs font-semibold animate-pulse';
+    alertEntry.innerText = `>> [ALERT] Rapid PM2.5 Inversion Spike Detected at Sitapura Node. Automatic mitigation initialized.`;
     termFeed.prepend(alertEntry);
   }
 
-  // 6 seconds recovery
   setTimeout(() => {
     targetSpot.aqi = 218;
-    targetSpot.status = "Hazardous";
+    targetSpot.status = "Elevated Hazard";
     targetSpot.stages[0].metric = "142.5 µg";
     targetSpot.stages[3].metric = "CRITICAL";
     renderPipelines();
@@ -356,7 +408,7 @@ function triggerEmergencyAnomaly() {
 }
 
 // ==========================================
-// 9. HIGH-TECH PRELOADER BOOT SEQUENCE
+// 10. BOOT SEQUENCE
 // ==========================================
 function runPreloaderBoot() {
   const overlay = document.getElementById('preloader-overlay');
@@ -367,10 +419,10 @@ function runPreloaderBoot() {
   if (!overlay) return;
 
   const steps = [
-    { pct: 28, text: "> Linking Jaipur Sector-07 Sensor Mesh... [OK]" },
-    { pct: 64, text: "> Syncing Sitapura, MI Road, Mansarovar Nodes... [OK]" },
-    { pct: 92, text: "> Calibrating 48h AI Dispersion Tensors... [OK]" },
-    { pct: 100, text: "> Telemetry Stream Synchronized. System Online." }
+    { pct: 30, text: "Linking Jaipur Sector-07 Sensor Mesh..." },
+    { pct: 68, text: "Calibrating Sitapura, MI Road, Mansarovar Nodes..." },
+    { pct: 90, text: "Synthesizing Atmospheric Dispersion Tensors..." },
+    { pct: 100, text: "Telemetry Stream Synchronized." }
   ];
 
   let currentStep = 0;
@@ -388,11 +440,11 @@ function runPreloaderBoot() {
         if (map) map.invalidateSize();
       }, 350);
     }
-  }, 260);
+  }, 240);
 }
 
 // ==========================================
-// 10. REALTIME CONTINUOUS INGESTION LOOP
+// 11. REALTIME STREAMING LOOP
 // ==========================================
 function startLiveCommand() {
   const pingEl = document.getElementById('sys-ping');
@@ -415,13 +467,11 @@ function startLiveCommand() {
     const timeStr = now.toTimeString().split(' ')[0];
     if (clockEl) clockEl.innerText = timeStr;
 
-    renderHistogramTicks();
-
     if (termFeed) {
       const randomLine = telemetryData.lines[Math.floor(Math.random() * telemetryData.lines.length)];
       const entry = document.createElement('p');
-      entry.className = 'text-[#3BDB67] text-[11px] leading-relaxed';
-      entry.innerText = `> [${timeStr}] Packet Sync: ${randomLine.lineId} (${randomLine.name}) -> Ingested AQI ${randomLine.aqi} [Latency: ${newPing}ms]`;
+      entry.className = 'text-emerald-400 text-xs leading-relaxed font-mono';
+      entry.innerText = `> [${timeStr}] Sync Packet: ${randomLine.lineId} (${randomLine.name}) -> Ingested AQI ${randomLine.aqi} [${newPing}ms]`;
       termFeed.prepend(entry);
       if (termFeed.children.length > 25) termFeed.removeChild(termFeed.lastChild);
     }
@@ -429,7 +479,7 @@ function startLiveCommand() {
 }
 
 // ==========================================
-// 11. MOUSE SPOTLIGHT TRACKER
+// 12. MOUSE TRACKER & INIT
 // ==========================================
 document.addEventListener('mousemove', (e) => {
   document.querySelectorAll('.cmd-card').forEach((card) => {
@@ -441,9 +491,6 @@ document.addEventListener('mousemove', (e) => {
   });
 });
 
-// ==========================================
-// 12. WINDOW RESIZE & INIT
-// ==========================================
 window.addEventListener('resize', () => {
   if (map) map.invalidateSize();
 });
@@ -452,7 +499,7 @@ window.addEventListener('DOMContentLoaded', () => {
   initMap();
   renderPipelines();
   initTimeCurveChart();
-  renderHistogramTicks();
+  renderHistogramTicks(36);
   startLiveCommand();
   runPreloaderBoot();
 });

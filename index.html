@@ -2,258 +2,253 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>VayuDrishti | Industrial Telemetry Command</title>
-  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VayuDrishti | Atmospheric Telemetry Command System</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="flex flex-col md:flex-row min-h-screen bg-[#101419]">
+<body>
 
-  <!-- High-Tech Telemetry Boot Preloader Overlay -->
+  <!-- Preloader -->
   <div id="preloader-overlay">
-    <div class="flex flex-col items-center max-w-sm w-full px-6 space-y-5 text-center">
-      <div class="relative flex items-center justify-center">
-        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#3BDB67] to-[#00D2D3] flex items-center justify-center text-slate-950 font-black text-2xl preloader-glow-ring">
-          V
-        </div>
-        <span class="absolute w-20 h-20 rounded-2xl border border-[#3BDB67]/30 animate-ping"></span>
+    <div class="flex flex-col items-center max-w-xs w-full px-6 space-y-5 text-center">
+      <div class="logo-mark w-14 h-14 text-xl">V</div>
+      <div>
+        <h2 class="font-bold text-base ink">VayuDrishti</h2>
+        <p id="boot-status-text" class="mute text-xs mt-1">Linking Jaipur Sector 07 Sensor Mesh...</p>
       </div>
-
-      <div class="space-y-1">
-        <h2 class="text-white font-bold text-base tracking-wider font-mono">VAYU_DRISHTI // BOOT_CORE</h2>
-        <p id="boot-status-text" class="text-[#3BDB67] text-xs font-mono tracking-tight">> Calibrating Jaipur Sector-07 Mesh...</p>
+      <div class="w-full h-1.5 rounded-full overflow-hidden bg-slate-200">
+        <div id="boot-progress-fill" class="h-full w-0 transition-all duration-300" style="background:var(--teal)"></div>
       </div>
-
-      <div class="w-full bg-[#181E26] h-1.5 rounded-full overflow-hidden border border-[#242D3A] relative">
-        <div id="boot-progress-fill" class="h-full bg-gradient-to-r from-[#3BDB67] to-[#00D2D3] w-0 transition-all duration-300"></div>
-      </div>
-
-      <div class="flex justify-between w-full text-[10px] font-mono text-slate-500">
-        <span>MEM_ALLOC: 98.4%</span>
-        <span id="boot-pct-val" class="text-white font-bold">0%</span>
-      </div>
+      <span id="boot-pct-val" class="font-mono text-xs font-semibold" style="color:var(--teal)">0%</span>
     </div>
   </div>
 
-  <!-- Adaptive Nav Bar: Desktop = Left Rail | Mobile = Bottom App Bar -->
-  <aside class="mobile-nav-bar w-16 bg-[#0E1217] border-r border-[#242D3A] flex flex-col items-center py-5 justify-between select-none fixed h-full z-50">
-    <div class="space-y-6 flex flex-col items-center logo-container">
-      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#3BDB67] to-[#00D2D3] flex items-center justify-center text-slate-950 font-black text-lg shadow-lg shadow-emerald-500/20 cursor-pointer hover:scale-105 transition-all" onclick="switchNav('command')">
-        V
+  <!-- Top Navigation -->
+  <header class="top-bar">
+    <div class="flex items-center gap-3 cursor-pointer" onclick="switchNav('command')">
+      <div class="logo-mark w-10 h-10">V</div>
+      <div class="leading-tight">
+        <div class="font-extrabold text-lg ink">VayuDrishti</div>
+        <div class="text-[9px] mute tracking-wide">PLANETARY CLIMATE TELEMETRY</div>
       </div>
     </div>
-    
-    <nav class="space-y-4 pt-4 flex flex-col items-center">
-      <button id="nav-btn-command" onclick="switchNav('command')" title="Live Command Console" class="w-10 h-10 rounded-lg bg-[#181E26] text-[#3BDB67] flex items-center justify-center border border-[#3BDB67]/40 shadow-lg shadow-emerald-500/10 transition-all">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-      </button>
-      <button id="nav-btn-analytics" onclick="switchNav('analytics')" title="Predictive Curve Analytics" class="w-10 h-10 rounded-lg text-slate-400 hover:text-white hover:bg-[#181E26] flex items-center justify-center border border-transparent transition-all">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-      </button>
-      <button id="nav-btn-diagnostics" onclick="switchNav('diagnostics')" title="Live Telemetry Stream & Logs" class="w-10 h-10 rounded-lg text-slate-400 hover:text-white hover:bg-[#181E26] flex items-center justify-center border border-transparent transition-all">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-      </button>
+
+    <div class="loc-pill">
+      <span>Jaipur Core Grid • Sector 07</span>
+      <span class="sync"><i></i> 99.8% Sync</span>
+    </div>
+
+    <nav id="top-nav" class="flex items-center gap-1 ml-auto">
+      <button id="nav-btn-command" onclick="switchNav('command')" class="bg-emerald-500/10"><span>Dashboard</span></button>
+      <button id="nav-btn-analytics" onclick="switchNav('analytics')"><span>Analytics &amp; Trends</span></button>
+      <button id="nav-btn-diagnostics" onclick="switchNav('diagnostics')"><span>Sensor Network</span></button>
     </nav>
-    
-    <div class="text-slate-500 font-mono text-[10px] version-text">v2.6</div>
-  </aside>
+  </header>
 
-  <!-- Main Command Workspace -->
-  <div class="flex-1 flex flex-col p-3 md:p-6 space-y-4 max-w-[1600px] ml-0 md:ml-16 mb-16 md:mb-0 w-full overflow-hidden">
+  <main class="page">
 
-    <!-- Top Status Header -->
-    <header class="anim-boot-header flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#242D3A]">
-      <div class="flex items-center space-x-3">
-        <h1 class="text-lg md:text-xl font-bold tracking-tight text-white flex items-center gap-2">
-          VayuDrishti
-          <span class="text-[10px] md:text-xs font-mono font-medium px-2 py-0.5 rounded bg-[#181E26] text-[#3BDB67] border border-[#3BDB67]/30">JAIPUR_SECTOR</span>
-        </h1>
+    <!-- Title row + timeframe + spike -->
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <p class="mute text-xs">Real-time Atmospheric Telemetry &amp; Predictive Dispersion Command System</p>
+      <div class="flex items-center gap-3">
+        <button onclick="triggerEmergencyAnomaly()" class="spike-btn"><i></i> Simulate Spike</button>
+      </div>
+    </div>
+
+    <!-- VIEW 1: DASHBOARD -->
+    <div id="view-command-console" class="space-y-6 mt-5">
+
+      <!-- Row 1: AQI hero + AI model -->
+      <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+
+        <section class="cmd-card hero xl:col-span-7">
+          <div class="flex flex-wrap justify-between items-center gap-2">
+            <span class="chip chip-amber">REALTIME COMPUTED AQI • US-EPA STANDARD</span>
+            <span class="mute text-[11px]">Updated 4 mins ago</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-5 mt-5 items-center">
+            <div class="md:col-span-4 flex justify-center">
+              <div class="relative w-44 h-44 flex items-center justify-center">
+                <svg class="w-full h-full gauge-svg" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="42" stroke="#EEF2F1" stroke-width="7" fill="transparent" />
+                  <circle id="gauge-circle" cx="50" cy="50" r="42" stroke="#F59E0B" stroke-width="7" stroke-dasharray="264" stroke-dashoffset="150" stroke-linecap="round" fill="transparent" />
+                </svg>
+                <div class="absolute text-center">
+                  <p class="text-[10px] mute font-semibold">AIR QUALITY INDEX</p>
+                  <span id="overall-index" class="text-5xl font-extrabold" style="color:#F59E0B">68</span>
+                  <p class="chip chip-solid mt-1">MODERATE</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="md:col-span-8 space-y-3">
+              <div class="advisory">
+                <p class="font-bold text-sm ink">Outdoor Activity Advisory</p>
+                <p class="text-xs mute mt-1 leading-relaxed">Fair for light outdoor walks and casual cycling. Sensitive groups should consider a lightweight filtration mask during the 16:00 – 18:00 rush hour spike.</p>
+              </div>
+              <div class="stream">
+                <div class="flex justify-between text-[11px] mute"><span>Tropospheric Laminar Stream</span><b class="ink">14 km/h NW</b></div>
+                <div class="stream-lines"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex justify-between text-[11px] mute mt-5 mb-2"><span>Today's Peak Hours Trajectory</span><span>Hourly Sensor Consensus</span></div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="hour good"><p>Morning (08:00)</p><b>45</b><span>Good</span></div>
+            <div class="hour mod now"><p>Noon (Now)</p><b>68</b><span>Moderate</span></div>
+            <div class="hour sens"><p>Evening (18:00)</p><b>112</b><span>Sensitive</span></div>
+            <div class="hour mod"><p>Night (22:00)</p><b>72</b><span>Moderate</span></div>
+          </div>
+        </section>
+
+        <div class="xl:col-span-5 space-y-6">
+          <section class="cmd-card p-6 ai-card">
+            <div class="flex justify-between items-start gap-3">
+              <div>
+                <h3 class="font-bold text-base ink">Vayu AI Neural Model</h3>
+                <p class="text-[11px] mute">Tropospheric Physics + Micro-Sensor Machine Learning</p>
+              </div>
+              <span class="chip chip-blue">Confidence 96.4%</span>
+            </div>
+            <p class="text-xs mute leading-relaxed mt-4 p-4 rounded-2xl bg-sky-50 border border-sky-100"><b class="ink">Diagnostic Synthesis:</b> Atmospheric dispersion steadily accelerating due to an incoming 14 km/h north-westerly breeze front. Expected <b class="ink">18% AQI drop by 18:00</b> before evening thermal inversion temporarily traps vehicle particulates.</p>
+            <div class="grid grid-cols-2 gap-4 mt-4 text-xs mute">
+              <div>Ventilation Index<p class="text-xl font-bold ink">4,820 <small class="mute text-[10px]">m²/s</small></p><span style="color:var(--teal)">High Dispersion</span></div>
+              <div>Air Stagnation Risk<p class="text-xl font-bold" style="color:#10B981">Low <small class="mute text-[10px]">(12%)</small></p><span class="mute">Thermal lift active</span></div>
+            </div>
+          </section>
+
+          <div class="grid grid-cols-2 gap-6">
+            <section class="cmd-card stat stat-amber">
+              <div class="flex justify-between text-[11px] mute"><span>Avg PM2.5</span><span class="chip chip-amber">Driver</span></div>
+              <p id="avg-pm25" class="text-3xl font-extrabold ink mt-2">74.9 µg</p>
+              <div class="bar"><i style="width:62%;background:#F59E0B"></i></div>
+              <p class="text-[10px] mute mt-2">WHO 24h Threshold: 15 µg/m³</p>
+            </section>
+            <section class="cmd-card stat stat-green">
+              <div class="flex justify-between text-[11px] mute"><span>Peak AQI</span><span class="chip chip-green">Live</span></div>
+              <p id="peak-aqi" class="text-3xl font-extrabold ink mt-2">218</p>
+              <div class="bar"><i style="width:78%;background:#10B981"></i></div>
+              <p class="text-[10px] mute mt-2">Sitapura Industrial Area</p>
+            </section>
+          </div>
+        </div>
       </div>
 
-      <!-- Realtime Ingestion Badges & Emergency Button -->
-      <div class="flex flex-wrap items-center gap-3 text-[11px] md:text-xs font-mono text-slate-400">
-        <div class="flex items-center gap-1.5">
-          <span class="w-2 h-2 rounded-full bg-[#3BDB67] animate-ping"></span>
-          <span class="text-white font-bold">14.2k PKT/S</span>
+      <!-- Telemetry feeds (live pipelines rendered by app.js) -->
+      <section>
+        <div class="flex justify-between items-center mb-3">
+          <h2 class="font-bold text-lg ink">Live Environmental Telemetry Feeds</h2>
+          <span class="chip chip-blue">3 Active Nodes</span>
         </div>
-        <div>PING: <span id="sys-ping" class="text-[#3BDB67] font-bold">14ms</span></div>
-        <div class="hidden sm:block">BUFFER: <span class="text-white font-bold">99.8%</span></div>
-        <div class="hidden lg:block px-2.5 py-0.5 rounded bg-[#181E26] border border-[#242D3A] text-slate-300">
-          VIEW: <span id="active-view-badge" class="text-[#00D2D3] font-bold uppercase">COMMAND_CONSOLE</span>
-        </div>
+        <div class="cmd-card p-5"><div id="pipeline-container" class="space-y-3.5"></div></div>
+      </section>
 
-        <!-- Live Tactical Anomaly Trigger Button -->
-        <button type="button" onclick="triggerEmergencyAnomaly()" class="px-2.5 py-1 rounded bg-red-500/10 hover:bg-red-500/20 text-[#FF4757] border border-[#FF4757]/30 font-mono font-bold flex items-center gap-1.5 transition-all active:scale-95 shadow-lg shadow-red-500/10 text-[11px]">
-          <span class="w-1.5 h-1.5 rounded-full bg-[#FF4757] animate-ping"></span>
-          SIMULATE_ANOMALY
-        </button>
-      </div>
-    </header>
+      <!-- Row 2: Map + Trend -->
+      <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+        <section class="cmd-card p-6 xl:col-span-5">
+          <h3 class="font-bold text-base ink">Regional Spatial Air Quality Heatmap</h3>
+          <p class="text-[11px] mute mb-3">Micro-station mesh interpolation • Jaipur [26.85°N, 75.81°E]</p>
+          <div class="dark-map-shell relative"><div id="map" class="w-full h-full"></div></div>
+          <div class="aqi-legend mt-4"></div>
+          <div class="flex justify-between text-[10px] mute mt-1"><span>0-50 Good</span><span>51-100 Mod</span><span>101-150 Sens</span><span>151-200 Unhealthy</span><span>201+</span></div>
+        </section>
 
-    <!-- VIEW 1: MAIN COMMAND CONSOLE -->
-    <div id="view-command-console" class="space-y-4">
-      
-      <!-- Mid Section: Pipeline Matrix + Tactical Map -->
-      <div class="grid grid-cols-1 xl:grid-cols-12 gap-4">
-        <!-- Left: Telemetry Pipeline Matrix -->
-        <div class="anim-boot-left xl:col-span-8 cmd-card p-4 md:p-5 space-y-4">
-          <div class="flex justify-between items-center text-xs font-mono text-slate-400 border-b border-[#242D3A] pb-2.5">
-            <span class="font-bold tracking-wider text-slate-300">TELEMETRY PIPELINES</span>
-            <span class="text-[11px] text-slate-500">VECTOR SYNC</span>
-          </div>
-          <div id="pipeline-container" class="space-y-3.5"></div>
-        </div>
-
-        <!-- Right: Tactical Mini-Map with Rotating Radar -->
-        <div class="anim-boot-map xl:col-span-4 cmd-card p-4 flex flex-col justify-between">
-          <div class="flex justify-between items-center text-xs font-mono text-slate-400 mb-2">
-            <span class="text-white font-bold flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-[#3BDB67]"></span>
-              GEOSPATIAL SECTOR 07
-            </span>
-            <span class="text-[11px] text-slate-500 font-mono">[26.85°N, 75.81°E]</span>
-          </div>
-          
-          <div class="dark-map-shell flex-1 h-[240px] md:h-[260px] relative overflow-hidden" id="map-shell-container">
-            <div id="map" class="w-full h-full"></div>
-            <div class="radar-ring w-[130px] h-[130px]"></div>
-            <div class="radar-ring w-[200px] h-[200px]"></div>
-            <div class="radar-sweep-beam"></div>
-          </div>
-
-          <div class="mt-3 pt-2.5 border-t border-[#242D3A] flex justify-between text-[11px] font-mono text-slate-400">
-            <span>HOTSPOTS: <b class="text-white">3 NODES</b></span>
-            <span class="text-[#3BDB67] flex items-center gap-1">
-              <span class="w-1.5 h-1.5 rounded-full bg-[#3BDB67] animate-ping"></span> RADAR ACTIVE
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Bottom Section: TheMotionDot Analytics Bar -->
-      <div class="anim-boot-bottom grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4">
-        
-        <!-- 1. Health Index Dial -->
-        <div class="lg:col-span-3 cmd-card p-4 flex flex-col justify-between">
-          <div class="flex justify-between items-center text-xs font-mono text-slate-400 border-b border-[#242D3A] pb-2">
-            <span class="font-bold text-slate-300">AIR HEALTH INDEX</span>
-            <span class="text-[#3BDB67] font-bold">OPTIMAL</span>
-          </div>
-          <div class="flex items-center justify-center my-3 relative">
-            <svg class="w-28 h-28 gauge-svg" viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r="40" stroke="#242D3A" stroke-width="8" fill="transparent" />
-              <circle id="gauge-circle" cx="50" cy="50" r="40" stroke="#3BDB67" stroke-width="8" stroke-dasharray="251.2" stroke-dashoffset="35" stroke-linecap="round" fill="transparent" />
-            </svg>
-            <div class="absolute text-center">
-              <span id="overall-index" class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">87%</span>
-              <p class="text-[9px] font-mono text-slate-400">SURVEILLANCE</p>
+        <section class="cmd-card p-6 xl:col-span-7 flex flex-col">
+          <div class="flex justify-between items-start">
+            <div>
+              <h3 class="font-bold text-base ink" id="trajectory-chart-title">48h Dispersion Trajectory</h3>
+              <p class="text-[11px] mute" id="trajectory-chart-desc">Neural dispersion tensor &amp; predictive trajectory curve</p>
             </div>
+            <span class="chip chip-teal">AI Predict</span>
           </div>
-          <div class="grid grid-cols-2 gap-2 text-center text-xs font-mono pt-2 border-t border-[#242D3A]">
-            <div class="bg-[#101419] p-2 rounded">
-              <p class="text-slate-500 text-[10px]">AVG PM2.5</p>
-              <p id="avg-pm25" class="text-white font-bold">74.9 µg</p>
-            </div>
-            <div class="bg-[#101419] p-2 rounded">
-              <p class="text-slate-500 text-[10px]">PEAK AQI</p>
-              <p id="peak-aqi" class="text-[#FF4757] font-bold">218</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- 2. Work Flow Time Curve List -->
-        <div class="md:col-span-2 lg:col-span-6 cmd-card p-4 flex flex-col justify-between">
-          <div class="flex justify-between items-center text-xs font-mono text-slate-400 border-b border-[#242D3A] pb-2">
-            <div class="flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded bg-[#3BDB67]"></span>
-              <span class="font-bold text-white tracking-wide">Work Flow Time Curve</span>
-            </div>
-            <div class="text-[10px] text-[#3BDB67] font-mono">48h Forecast AI</div>
-          </div>
-          <div class="h-[130px] w-full my-1">
-            <canvas id="timeCurveChart"></canvas>
-          </div>
-          <div class="pt-2 border-t border-[#242D3A]">
-            <div class="flex justify-between items-end h-5 gap-1 px-1 overflow-hidden" id="histo-tick-bar"></div>
-            <div class="flex justify-between text-[8px] md:text-[9px] font-mono text-slate-500 mt-1">
+          <div class="h-[200px] w-full my-3 flex-1"><canvas id="timeCurveChart"></canvas></div>
+          <div class="pt-2 border-t border-slate-100">
+            <div class="flex justify-between items-end h-6 gap-1 px-1 overflow-hidden" id="histo-tick-bar"></div>
+            <div class="flex justify-between text-[10px] font-mono mute mt-1.5" id="histo-timeline-labels">
               <span>+00h</span><span>+12h</span><span>+24h</span><span>+36h</span><span>+48h</span>
             </div>
           </div>
-        </div>
+        </section>
+      </div>
 
-        <!-- 3. Structure Overview -->
-        <div class="lg:col-span-3 cmd-card p-4 flex flex-col justify-between">
-          <div class="flex justify-between items-center text-xs font-mono text-slate-400 border-b border-[#242D3A] pb-2">
-            <span class="font-bold text-slate-300">STRUCTURE OVERVIEW</span>
-            <span class="text-[10px] text-slate-500 font-mono">SYNC</span>
-          </div>
-          <div class="space-y-2 my-2 font-mono text-xs">
-            <div class="bg-[#101419] p-2 rounded border border-[#242D3A] flex justify-between items-center">
-              <div>
-                <p class="text-white font-bold text-[11px]">Sitapura Array</p>
-                <p class="text-slate-500 text-[10px]">Filter: Active</p>
-              </div>
-              <span class="px-2 py-0.5 rounded bg-red-500/20 text-[#FF4757] font-bold text-[10px] border border-red-500/30">HAZARD</span>
+      <!-- Health advisories + quadrant influx -->
+      <section>
+        <h2 class="font-bold text-lg ink mb-3">Targeted Human Health Advisories &amp; Community Mitigation</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="cmd-card adv adv-green"><span class="chip chip-green">Clear for Outdoors</span><h4>Schools &amp; Outdoor Sports</h4><p>Recess and athletic practices are cleared for standard duration until 16:30. Endurance routines may move indoors after dusk.</p><small>Recess Safety Index: 88/100</small></div>
+          <div class="cmd-card adv adv-amber"><span class="chip chip-amber">Sensitive Caution</span><h4>Vulnerable Groups &amp; Respiratory Care</h4><p>People with asthma, COPD or cardiac sensitivities should keep rescue inhalers accessible and avoid prolonged exertion near arterial roads.</p><small>Airway Strain Risk: Mild</small></div>
+          <div class="cmd-card adv adv-blue">
+            <div class="flex justify-between items-center"><span class="chip chip-blue">Quadrant Influx</span><span class="font-mono text-[10px] mute" id="log-clock">--:--:--</span></div>
+            <div class="space-y-2 mt-3 text-xs">
+              <div class="qrow"><span>Sitapura Node</span><b class="text-rose-500">Critical</b></div>
+              <div class="qrow"><span>MI Road Corridor</span><b class="text-amber-500">Moderate</b></div>
+              <div class="qrow"><span>Mansarovar Hub</span><b class="text-emerald-500">Optimal</b></div>
             </div>
-            <div class="bg-[#101419] p-2 rounded border border-[#242D3A] flex justify-between items-center">
-              <div>
-                <p class="text-white font-bold text-[11px]">MI Road Hub</p>
-                <p class="text-slate-500 text-[10px]">Dispersion: Normal</p>
-              </div>
-              <span class="px-2 py-0.5 rounded bg-amber-500/20 text-[#FF9F1C] font-bold text-[10px] border border-amber-500/30">MODERATE</span>
-            </div>
-            <div class="bg-[#101419] p-2 rounded border border-[#242D3A] flex justify-between items-center">
-              <div>
-                <p class="text-white font-bold text-[11px]">Mansarovar Green</p>
-                <p class="text-slate-500 text-[10px]">Eco Node: Stable</p>
-              </div>
-              <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-[#3BDB67] font-bold text-[10px] border border-emerald-500/30">OPTIMAL</span>
-            </div>
-          </div>
-          <div class="text-[10px] font-mono text-slate-500 pt-2 border-t border-[#242D3A] flex justify-between">
-            <span>SYS HEALTH: <b class="text-[#3BDB67]">STABLE</b></span>
-            <span id="log-clock">--:--:--</span>
+            <small>Telemetry Latency: <b id="sys-ping" style="color:var(--teal)">14ms</b></small>
           </div>
         </div>
+      </section>
+    </div>
 
+    <!-- VIEW 2: ANALYTICS -->
+    <div id="view-analytics" class="hidden space-y-6 mt-5">
+      <div class="cmd-card p-7 space-y-4">
+        <div class="flex justify-between items-center border-b border-slate-100 pb-4">
+          <div><h2 class="text-lg font-bold ink">Full-Spectrum Vector Trajectory</h2><p class="text-xs mute">High-frequency AI particulate dispersion simulation</p></div>
+          <span class="chip chip-green">Confidence: 98.4%</span>
+        </div>
+        <div class="h-[360px] w-full"><canvas id="deepAnalyticsChart"></canvas></div>
       </div>
     </div>
 
-    <!-- VIEW 2: FULL ANALYTICS INSPECTION VIEW -->
-    <div id="view-analytics" class="hidden space-y-4">
-      <div class="cmd-card p-4 md:p-6 space-y-4">
-        <div class="flex justify-between items-center border-b border-[#242D3A] pb-3">
-          <div>
-            <h2 class="text-base md:text-lg font-bold text-white tracking-wide">48-Hour Deep Atmospheric Vector Analytics</h2>
-            <p class="text-[11px] md:text-xs text-slate-400 font-mono mt-0.5">High-frequency predictive air trajectory calculation</p>
-          </div>
-          <span class="px-2.5 py-0.5 rounded bg-[#3BDB67]/10 text-[#3BDB67] border border-[#3BDB67]/30 font-mono text-[10px] md:text-xs font-bold">ACCURACY: 94.6%</span>
+    <!-- VIEW 3: SENSOR NETWORK -->
+    <div id="view-diagnostics" class="hidden space-y-6 mt-5">
+      <div class="cmd-card p-7 space-y-4">
+        <div class="flex justify-between items-center border-b border-slate-100 pb-4">
+          <div><h2 class="text-lg font-bold ink">Realtime Telemetry Ingestion</h2><p class="text-xs mute">Direct socket connection to Sector-07 micro-sensors</p></div>
+          <span class="chip chip-green">INGESTION LIVE</span>
         </div>
-        <div class="h-[280px] md:h-[360px] w-full">
-          <canvas id="deepAnalyticsChart"></canvas>
+        <div id="live-terminal-feed" class="bg-[#0B2530] p-4 rounded-2xl h-[320px] overflow-y-auto space-y-2 text-xs font-mono text-slate-300">
+          <p class="text-emerald-400">> [SYS_SYNC] Initialized socket link with Jaipur core sensors.</p>
         </div>
       </div>
     </div>
+  </main>
 
-    <!-- VIEW 3: LIVE DIAGNOSTICS & STREAMING INGESTION -->
-    <div id="view-diagnostics" class="hidden space-y-4">
-      <div class="cmd-card p-4 md:p-6 space-y-4 font-mono">
-        <div class="flex justify-between items-center border-b border-[#242D3A] pb-3 text-xs">
-          <span class="text-white font-bold tracking-wider">HARDWARE TELEMETRY LOG BUFFER</span>
-          <span class="text-[#3BDB67] flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-[#3BDB67] animate-ping"></span> CONTINUOUS_INGEST</span>
-        </div>
-        <div id="live-terminal-feed" class="bg-[#0E1217] p-3 md:p-4 rounded-xl border border-[#242D3A] h-[280px] md:h-[340px] overflow-y-auto space-y-2 text-[11px] md:text-xs text-slate-300">
-          <p class="text-[#3BDB67]">> [SYS_INIT] Connecting socket to Jaipur Sector 07...</p>
-        </div>
-      </div>
-    </div>
-
-  </div>
+  <!-- Cursor trailing glow -->
+  <div class="cursor-glow cursor-glow-lg"></div>
+  <div class="cursor-glow cursor-glow-sm"></div>
 
   <script src="app.js"></script>
+  <script>
+    // Soft trailing glow that lazily follows the cursor (separate from app.js)
+    (function () {
+      if (window.matchMedia('(pointer: coarse)').matches) return;
+      const layers = [
+        { el: document.querySelector('.cursor-glow-lg'), ease: 0.07, x: innerWidth / 2, y: innerHeight / 2 },
+        { el: document.querySelector('.cursor-glow-sm'), ease: 0.16, x: innerWidth / 2, y: innerHeight / 2 }
+      ];
+      let tx = innerWidth / 2, ty = innerHeight / 2;
+      document.addEventListener('mousemove', e => {
+        tx = e.clientX; ty = e.clientY;
+        layers.forEach(l => l.el.style.opacity = 1);
+      });
+      document.addEventListener('mouseleave', () => layers.forEach(l => l.el.style.opacity = 0));
+      (function loop() {
+        layers.forEach(l => {
+          l.x += (tx - l.x) * l.ease;
+          l.y += (ty - l.y) * l.ease;
+          l.el.style.transform = `translate(${l.x}px, ${l.y}px) translate(-50%, -50%)`;
+        });
+        requestAnimationFrame(loop);
+      })();
+    })();
+  </script>
 </body>
 </html>
