@@ -1,4 +1,6 @@
-// 1. Telemetry Data
+// ==========================================
+// 1. TELEMETRY DATA (JAIPUR URBAN CORE SECTOR)
+// ==========================================
 const telemetryData = {
   project: "VayuDrishti",
   region: "Jaipur Urban Sector",
@@ -60,15 +62,18 @@ const telemetryData = {
   ]
 };
 
-// 2. Leaflet Tactical Map (Free OpenStreetMap Tiles, Zero API Key)
+// ==========================================
+// 2. CRYSTAL-CLEAR TACTICAL MAP INITIALIZATION
+// ==========================================
 let map;
 function initMap() {
   const jaipurCentroid = [26.8550, 75.8100];
   map = L.map('map', {
     zoomControl: false,
     attributionControl: false
-  }).setView(jaipurCentroid, 11);
+  }).setView(jaipurCentroid, 12); // Balanced clean sector view
 
+  // Free OpenStreetMap Tiles (Zero API Key Required)
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
   }).addTo(map);
@@ -77,13 +82,13 @@ function initMap() {
     const customIcon = L.divIcon({
       className: 'relative flex items-center justify-center',
       html: `
-        <div class="relative w-8 h-8 flex items-center justify-center cursor-pointer">
-          <div class="marker-ring w-8 h-8" style="background-color: ${line.color}66;"></div>
-          <div class="w-3.5 h-3.5 rounded-full border-2 border-[#101419] z-10 shadow-lg" style="background-color: ${line.color}; box-shadow: 0 0 12px ${line.color};"></div>
+        <div class="relative w-7 h-7 flex items-center justify-center cursor-pointer">
+          <div class="marker-ring w-7 h-7" style="background-color: ${line.color}55;"></div>
+          <div class="w-3.5 h-3.5 rounded-full border-2 border-[#101419] z-10 shadow-lg" style="background-color: ${line.color}; box-shadow: 0 0 14px ${line.color};"></div>
         </div>
       `,
-      iconSize: [32, 32],
-      iconAnchor: [16, 16]
+      iconSize: [28, 28],
+      iconAnchor: [14, 14]
     });
 
     const marker = L.marker(line.coords, { icon: customIcon }).addTo(map);
@@ -96,7 +101,9 @@ function initMap() {
   });
 }
 
-// 3. Render Multi-Line Pipeline Matrix
+// ==========================================
+// 3. PIPELINE MATRIX RENDERING
+// ==========================================
 function renderPipelines() {
   const container = document.getElementById('pipeline-container');
   if (!container) return;
@@ -130,7 +137,9 @@ function renderPipelines() {
   }).join('');
 }
 
-// 4. Time Curve Chart
+// ==========================================
+// 4. PREDICTIVE CHARTS (CHART.JS)
+// ==========================================
 let timeChart;
 function initTimeCurveChart() {
   const ctx = document.getElementById('timeCurveChart');
@@ -177,7 +186,6 @@ function initTimeCurveChart() {
   });
 }
 
-// 5. Deep Analytics Chart for View 2
 let deepChart;
 function initDeepAnalyticsChart() {
   const ctx = document.getElementById('deepAnalyticsChart');
@@ -222,7 +230,9 @@ function initDeepAnalyticsChart() {
   });
 }
 
-// 6. Micro Histogram Ticks
+// ==========================================
+// 5. MICRO HISTOGRAM TICKS
+// ==========================================
 function renderHistogramTicks() {
   const bar = document.getElementById('histo-tick-bar');
   if (!bar) return;
@@ -237,8 +247,12 @@ function renderHistogramTicks() {
   bar.innerHTML = html;
 }
 
-// 7. Left Rail Navigation Switcher
+// ==========================================
+// 6. LEFT RAIL NAVIGATION CONTROLLER
+// ==========================================
 function switchNav(view) {
+  playTacticalBeep(720, 'sine', 0.06);
+
   const viewCommand = document.getElementById('view-command-console');
   const viewAnalytics = document.getElementById('view-analytics');
   const viewDiagnostics = document.getElementById('view-diagnostics');
@@ -255,39 +269,136 @@ function switchNav(view) {
   const activeClass = "w-10 h-10 rounded-lg bg-[#181E26] text-[#3BDB67] flex items-center justify-center border border-[#3BDB67]/40 shadow-lg shadow-emerald-500/10 transition-all";
 
   if (view === 'command') {
-    viewCommand.classList.remove('hidden');
-    viewAnalytics.classList.add('hidden');
-    viewDiagnostics.classList.add('hidden');
-    btnCommand.className = activeClass;
+    if (viewCommand) viewCommand.classList.remove('hidden');
+    if (viewAnalytics) viewAnalytics.classList.add('hidden');
+    if (viewDiagnostics) viewDiagnostics.classList.add('hidden');
+    if (btnCommand) btnCommand.className = activeClass;
     if (badge) badge.innerText = "COMMAND_CONSOLE";
     if (map) setTimeout(() => map.invalidateSize(), 150);
   } else if (view === 'analytics') {
-    viewCommand.classList.add('hidden');
-    viewAnalytics.classList.remove('hidden');
-    viewDiagnostics.classList.add('hidden');
-    btnAnalytics.className = activeClass;
+    if (viewCommand) viewCommand.classList.add('hidden');
+    if (viewAnalytics) viewAnalytics.classList.remove('hidden');
+    if (viewDiagnostics) viewDiagnostics.classList.add('hidden');
+    if (btnAnalytics) btnAnalytics.className = activeClass;
     if (badge) badge.innerText = "VECTOR_ANALYTICS";
     setTimeout(() => initDeepAnalyticsChart(), 100);
   } else if (view === 'diagnostics') {
-    viewCommand.classList.add('hidden');
-    viewAnalytics.classList.add('hidden');
-    viewDiagnostics.classList.remove('hidden');
-    btnDiagnostics.className = activeClass;
+    if (viewCommand) viewCommand.classList.add('hidden');
+    if (viewAnalytics) viewAnalytics.classList.add('hidden');
+    if (viewDiagnostics) viewDiagnostics.classList.remove('hidden');
+    if (btnDiagnostics) btnDiagnostics.className = activeClass;
     if (badge) badge.innerText = "TELEMETRY_STREAM";
   }
 }
 
-// 8. Realtime Ingestion Loop
+// ==========================================
+// 7. WEB AUDIO API SYNTHESIZER
+// ==========================================
+let audioCtx = null;
+function playTacticalBeep(freq = 600, type = 'sine', duration = 0.08) {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+  } catch (e) {}
+}
+
+// ==========================================
+// 8. SIMULATE EMERGENCY ANOMALY INJECTION
+// ==========================================
+let isAnomalyActive = false;
+function triggerEmergencyAnomaly() {
+  playTacticalBeep(320, 'sawtooth', 0.25);
+  isAnomalyActive = true;
+
+  const targetSpot = telemetryData.lines[0];
+  targetSpot.aqi = 412;
+  targetSpot.status = "CRITICAL HAZARD";
+  targetSpot.stages[0].metric = "384.2 µg";
+  targetSpot.stages[3].metric = "LOCKDOWN";
+
+  renderPipelines();
+
+  const termFeed = document.getElementById('live-terminal-feed');
+  if (termFeed) {
+    const alertEntry = document.createElement('p');
+    alertEntry.className = 'text-[#FF4757] text-[11px] font-bold tracking-wide animate-pulse';
+    alertEntry.innerText = `>> [CRITICAL ALERT] Rapid PM2.5 Inversion Spike Detected at Sitapura Node! Automated scrubbing triggered!`;
+    termFeed.prepend(alertEntry);
+  }
+
+  // 6 seconds baad recovery
+  setTimeout(() => {
+    targetSpot.aqi = 218;
+    targetSpot.status = "Hazardous";
+    targetSpot.stages[0].metric = "142.5 µg";
+    targetSpot.stages[3].metric = "CRITICAL";
+    renderPipelines();
+    playTacticalBeep(880, 'triangle', 0.15);
+    isAnomalyActive = false;
+  }, 6000);
+}
+
+// ==========================================
+// 9. HIGH-TECH PRELOADER BOOT SEQUENCE
+// ==========================================
+function runPreloaderBoot() {
+  const overlay = document.getElementById('preloader-overlay');
+  const statusText = document.getElementById('boot-status-text');
+  const progressFill = document.getElementById('boot-progress-fill');
+  const pctVal = document.getElementById('boot-pct-val');
+
+  if (!overlay) return;
+
+  const steps = [
+    { pct: 28, text: "> Linking Jaipur Sector-07 Sensor Mesh... [OK]" },
+    { pct: 64, text: "> Syncing Sitapura, MI Road, Mansarovar Nodes... [OK]" },
+    { pct: 92, text: "> Calibrating 48h AI Dispersion Tensors... [OK]" },
+    { pct: 100, text: "> Telemetry Stream Synchronized. System Online." }
+  ];
+
+  let currentStep = 0;
+  const interval = setInterval(() => {
+    if (currentStep < steps.length) {
+      const step = steps[currentStep];
+      if (progressFill) progressFill.style.width = `${step.pct}%`;
+      if (pctVal) pctVal.innerText = `${step.pct}%`;
+      if (statusText) statusText.innerText = step.text;
+      currentStep++;
+    } else {
+      clearInterval(interval);
+      setTimeout(() => {
+        overlay.classList.add('preloader-hidden');
+      }, 350);
+    }
+  }, 260);
+}
+
+// ==========================================
+// 10. REALTIME CONTINUOUS INGESTION LOOP
+// ==========================================
 function startLiveCommand() {
   const pingEl = document.getElementById('sys-ping');
   const clockEl = document.getElementById('log-clock');
   const termFeed = document.getElementById('live-terminal-feed');
 
   setInterval(() => {
-    telemetryData.lines.forEach(l => {
-      const flux = 1 + (Math.random() * 0.04 - 0.02);
-      l.aqi = Math.round(l.aqi * flux);
-    });
+    if (!isAnomalyActive) {
+      telemetryData.lines.forEach(l => {
+        const flux = 1 + (Math.random() * 0.04 - 0.02);
+        l.aqi = Math.round(l.aqi * flux);
+      });
+      renderPipelines();
+    }
 
     const newPing = Math.floor(12 + Math.random() * 5);
     if (pingEl) pingEl.innerText = `${newPing}ms`;
@@ -296,7 +407,6 @@ function startLiveCommand() {
     const timeStr = now.toTimeString().split(' ')[0];
     if (clockEl) clockEl.innerText = timeStr;
 
-    renderPipelines();
     renderHistogramTicks();
 
     if (termFeed) {
@@ -310,10 +420,27 @@ function startLiveCommand() {
   }, 3500);
 }
 
+// ==========================================
+// 11. MOUSE SPOTLIGHT TRACKER
+// ==========================================
+document.addEventListener('mousemove', (e) => {
+  document.querySelectorAll('.cmd-card').forEach((card) => {
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    card.style.setProperty('--mouse-x', `${x}px`);
+    card.style.setProperty('--mouse-y', `${y}px`);
+  });
+});
+
+// ==========================================
+// 12. DOM LOAD TRIGGER
+// ==========================================
 window.addEventListener('DOMContentLoaded', () => {
   initMap();
   renderPipelines();
   initTimeCurveChart();
   renderHistogramTicks();
   startLiveCommand();
+  runPreloaderBoot();
 });
